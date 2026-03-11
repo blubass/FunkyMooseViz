@@ -234,90 +234,90 @@ void UweVizAudioProcessorEditor::timerCallback() {
       audioProcessor.getFFTProcessorLeft().getSampleRate(),
       audioProcessor.getFFTProcessorLeft().getFFTSize());
 
-  std::vector<float> magsA;
-  std::vector<float> magsB;
+  // Check if new data is available on the left channel (primary for pitch)
+  if (!frozen && audioProcessor.getFFTProcessorLeft().isNewDataAvailable()) {
+      std::vector<float> magsA, magsB;
+      
+      if (displayMode == SpectrumComponent::DisplayMode::LR) {
+          audioProcessor.getFFTProcessorLeft().getMagnitudes(magsA);
+          spectrumComponent.setMagnitudesLeft(magsA);
+          audioProcessor.getFFTProcessorRight().getMagnitudes(magsB);
+          spectrumComponent.setMagnitudesRight(magsB);
+      } else {
+          audioProcessor.getFFTProcessorMid().getMagnitudes(magsA);
+          spectrumComponent.setMagnitudesLeft(magsA);
+          audioProcessor.getFFTProcessorSide().getMagnitudes(magsB);
+          spectrumComponent.setMagnitudesRight(magsB);
+      }
 
-  if (displayMode == SpectrumComponent::DisplayMode::LR) {
-    if (audioProcessor.getFFTProcessorLeft().getMagnitudes(magsA))
-      spectrumComponent.setMagnitudesLeft(magsA);
+      std::vector<float> waveformL, waveformR;
+      audioProcessor.getWaveformBuffer().getStereoWaveform(waveformL, waveformR);
+      waveformComponent.setWaveform(waveformL, waveformR);
 
-    if (audioProcessor.getFFTProcessorRight().getMagnitudes(magsB))
-      spectrumComponent.setMagnitudesRight(magsB);
-  } else {
-    if (audioProcessor.getFFTProcessorMid().getMagnitudes(magsA))
-      spectrumComponent.setMagnitudesLeft(magsA);
-
-    if (audioProcessor.getFFTProcessorSide().getMagnitudes(magsB))
-      spectrumComponent.setMagnitudesRight(magsB);
-  }
-
-  std::vector<float> waveformL, waveformR;
-  audioProcessor.getWaveformBuffer().getStereoWaveform(waveformL, waveformR);
-  waveformComponent.setWaveform(waveformL, waveformR);
-
-  // Pitch detection logic (HPS - Harmonic Product Spectrum)
-  std::vector<float> linearMags;
-  if (!frozen && audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(linearMags)) {
-      if (linearMags.size() > 10) {
-          int hpsOrder = 4;
-          std::vector<float> hps(linearMags.size() / hpsOrder, 1.0f);
-          
-          // Find first peak in linear spectrum to ignore noise below some threshold
-          float maxLin = 0.0f;
-          for (auto m : linearMags) if (m > maxLin) maxLin = m;
-          
-          if (maxLin > 0.0001f) {
-              // Calculate HPS
-              for (size_t i = 1; i < hps.size(); ++i) {
-                  float product = linearMags[i];
-                  for (int j = 2; j <= hpsOrder; ++j) {
-                      product *= linearMags[i * j];
+      // Pitch detection logic (HPS - Harmonic Product Spectrum)
+      std::vector<float> linearMags;
+      if (audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(linearMags)) {
+          if (linearMags.size() > 10) {
+              int hpsOrder = 4;
+              std::vector<float> hps(linearMags.size() / hpsOrder, 1.0f);
+              
+              float maxLin = 0.0f;
+              for (auto m : linearMags) if (m > maxLin) maxLin = m;
+              
+              // More sensitive: 0.00001f for quiet bass
+              if (maxLin > 0.00001f) {
+                  for (size_t i = 1; i < hps.size(); ++i) {
+                      float product = linearMags[i];
+                      for (int j = 2; j <= hpsOrder; ++j) {
+                          product *= linearMags[i * j];
+                      }
+                      hps[i] = product;
                   }
-                  hps[i] = product;
-              }
-              
-              // Find peak in HPS (ignore DC/bins below 20Hz)
-              int minBin = (int)std::ceil(20.0f * (float)linearMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
-              auto hpsStart = hps.begin() + minBin;
-              auto maxHpsIt = std::max_element(hpsStart, hps.end());
-              int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
-              float peakVal = *maxHpsIt;
-              
-              // Confidence calculation (peak vs average)
-              float sumHps = 0.0f;
-              for (auto hVal : hps) sumHps += hVal;
-              float avgHps = sumHps / (float)hps.size();
-              confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
-              
-              if (confidence > 2.0f) { // Threshold for "valid" pitch
-                  float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)linearMags.size();
                   
-                  // Smoothing (Moving Average / Median)
-                  freqHistory.push_back(freq);
-                  if (freqHistory.size() > 5) freqHistory.pop_front();
+                  int minBin = (int)std::ceil(20.0f * (float)linearMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
+                  auto hpsStart = hps.begin() + minBin;
+                  auto maxHpsIt = std::max_element(hpsStart, hps.end());
+                  int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
+                  float peakVal = *maxHpsIt;
                   
-                  float sumFreq = 0.0f;
-                  for (float f : freqHistory) sumFreq += f;
-                  smoothedFreq = sumFreq / (float)freqHistory.size();
+                  float sumHps = 0.0f;
+                  for (auto hVal : hps) sumHps += hVal;
+                  float avgHps = sumHps / (float)hps.size();
+                  confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
                   
-                  targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
+                  if (confidence > 1.5f) { // Lower threshold for more robust tracking
+                      float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)linearMags.size();
+                      
+                      freqHistory.push_back(freq);
+                      if (freqHistory.size() > 5) freqHistory.pop_front();
+                      
+                      float sumFreq = 0.0f;
+                      for (float f : freqHistory) sumFreq += f;
+                      smoothedFreq = sumFreq / (float)freqHistory.size();
+                      
+                      targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
+                  } else {
+                      if (!freqHistory.empty()) freqHistory.pop_front();
+                      targetNoteStr = "---";
+                  }
               } else {
-                  if (!freqHistory.empty()) freqHistory.pop_front();
+                  freqHistory.clear();
                   targetNoteStr = "---";
               }
+          }
+          
+          if (targetNoteStr == "---") {
+              currentNoteStr = "---";
           } else {
-              freqHistory.clear();
-              targetNoteStr = "---";
+              currentNoteStr = targetNoteStr;
           }
       }
-      
-      // Update display string
-      if (targetNoteStr == "---") {
-          noteHoldCount = 0;
-          currentNoteStr = "---";
-      } else {
-          currentNoteStr = targetNoteStr;
-      }
+
+      // Manual Clear Flag after ALL analysis consumes the data
+      audioProcessor.getFFTProcessorLeft().clearNewDataFlag();
+      audioProcessor.getFFTProcessorRight().clearNewDataFlag();
+      audioProcessor.getFFTProcessorMid().clearNewDataFlag();
+      audioProcessor.getFFTProcessorSide().clearNewDataFlag();
   }
 
   pitchLabel.setText(currentNoteStr, juce::dontSendNotification);

@@ -12,6 +12,9 @@ public:
     void pushSamples (const float* samples, int numSamples);
     bool getMagnitudes (std::vector<float>& result);
     bool getLinearMagnitudes (std::vector<float>& result);
+    
+    bool isNewDataAvailable() const noexcept { return fftReady; }
+    void clearNewDataFlag() noexcept          { fftReady = false; }
 
     double getSampleRate() const noexcept { return currentSampleRate; }
     int getFFTSize() const noexcept       { return fftSize; }
