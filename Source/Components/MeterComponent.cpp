@@ -20,15 +20,41 @@ float MeterComponent::gainToMeter01(float value) {
 void MeterComponent::paint(juce::Graphics &g) {
   auto area = getLocalBounds().toFloat();
 
-  // Module Panel Style from Amp
-  g.setColour(juce::Colour::fromRGB(18, 18, 18));
-  g.fillRoundedRectangle(area, 10.0f);
+  // Draw Amp-Style Hardware Frame
+  auto frameBounds = area.reduced(1.0f);
+  juce::ColourGradient frameGradOut(juce::Colour::fromRGB(45, 50, 55), frameBounds.getX(), frameBounds.getY(),
+                                    juce::Colour::fromRGB(15, 15, 18), frameBounds.getX(), frameBounds.getBottom(), false);
+  g.setGradientFill(frameGradOut);
+  g.fillRoundedRectangle(frameBounds, 4.0f);
 
-  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 80));
-  g.drawRoundedRectangle(area, 10.0f, 1.0f);
-  
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 12));
-  g.drawRoundedRectangle(area.reduced(1.0f), 10.0f, 0.8f);
+  auto panelBounds = frameBounds.reduced(3.0f);
+  g.setColour(juce::Colour::fromRGB(15, 15, 15));
+  g.fillRoundedRectangle(panelBounds, 2.0f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 180));
+  g.drawRoundedRectangle(panelBounds.reduced(1.0f), 2.0f, 1.5f);
+
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 25));
+  g.drawRoundedRectangle(frameBounds.reduced(1.0f).withTrimmedBottom(2.0f), 4.0f, 1.0f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
+  g.drawRoundedRectangle(frameBounds.reduced(0.5f).withTrimmedTop(2.0f), 4.0f, 1.0f);
+
+  auto drawScrew = [&](float cx, float cy) {
+      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+      g.fillEllipse(cx - 3.5f, cy - 3.5f, 7.0f, 7.0f);
+      g.setColour(juce::Colour::fromRGB(16, 16, 18));
+      g.fillEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f);
+      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 40));
+      g.drawEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f, 1.0f);
+      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 50));
+      g.drawLine(cx - 1.5f, cy - 1.5f, cx + 1.5f, cy + 1.5f, 1.5f);
+      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+      g.drawLine(cx - 1.0f, cy - 1.5f, cx + 2.0f, cy + 1.5f, 1.0f);
+  };
+  float offset = 7.0f;
+  drawScrew(area.getX() + offset, area.getY() + offset);
+  drawScrew(area.getRight() - offset, area.getY() + offset);
+  drawScrew(area.getX() + offset, area.getBottom() - offset);
+  drawScrew(area.getRight() - offset, area.getBottom() - offset);
 
   auto inner = area.reduced(9.0f);
   auto labelArea = inner.removeFromBottom(20.0f);
@@ -103,20 +129,43 @@ void CorrelationMeterComponent::setCorrelation(float newCorrelation) {
 void CorrelationMeterComponent::paint(juce::Graphics &g) {
   auto area = getLocalBounds().toFloat();
 
-  // Funky Moose Module Panel (Beveled Frame)
+  // Draw Amp-Style Hardware Frame
+  auto frameBounds = area.reduced(1.0f);
+  juce::ColourGradient frameGradOut(juce::Colour::fromRGB(45, 50, 55), frameBounds.getX(), frameBounds.getY(),
+                                    juce::Colour::fromRGB(15, 15, 18), frameBounds.getX(), frameBounds.getBottom(), false);
+  g.setGradientFill(frameGradOut);
+  g.fillRoundedRectangle(frameBounds, 4.0f);
+
+  auto panelBounds = frameBounds.reduced(3.0f);
   g.setColour(juce::Colour::fromRGB(15, 15, 15));
-  g.fillRoundedRectangle(area, 6.0f);
-  
-  // Metallic Bevel
-  juce::ColourGradient bevel(juce::Colour::fromRGB(70, 75, 80), area.getX(), area.getY(),
-                             juce::Colour::fromRGB(20, 22, 25), area.getX(), area.getBottom(), false);
-  g.setGradientFill(bevel);
-  g.drawRoundedRectangle(area, 6.0f, 1.8f);
+  g.fillRoundedRectangle(panelBounds, 2.0f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 180));
+  g.drawRoundedRectangle(panelBounds.reduced(1.0f), 2.0f, 1.5f);
 
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 30));
-  g.drawRoundedRectangle(area.reduced(0.5f), 6.0f, 0.8f);
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 25));
+  g.drawRoundedRectangle(frameBounds.reduced(1.0f).withTrimmedBottom(2.0f), 4.0f, 1.0f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
+  g.drawRoundedRectangle(frameBounds.reduced(0.5f).withTrimmedTop(2.0f), 4.0f, 1.0f);
 
-  auto inner = area.reduced(2.0f);
+  auto drawScrew = [&](float cx, float cy) {
+      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+      g.fillEllipse(cx - 3.5f, cy - 3.5f, 7.0f, 7.0f);
+      g.setColour(juce::Colour::fromRGB(16, 16, 18));
+      g.fillEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f);
+      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 40));
+      g.drawEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f, 1.0f);
+      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 50));
+      g.drawLine(cx - 1.5f, cy - 1.5f, cx + 1.5f, cy + 1.5f, 1.5f);
+      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+      g.drawLine(cx - 1.0f, cy - 1.5f, cx + 2.0f, cy + 1.5f, 1.0f);
+  };
+  float offset = 7.0f;
+  drawScrew(area.getX() + offset, area.getY() + offset);
+  drawScrew(area.getRight() - offset, area.getY() + offset);
+  drawScrew(area.getX() + offset, area.getBottom() - offset);
+  drawScrew(area.getRight() - offset, area.getBottom() - offset);
+
+  auto inner = area.reduced(9.0f);
   auto labelArea = inner.removeFromBottom(20.0f);
   inner.removeFromBottom(2.0f);
 
