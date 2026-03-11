@@ -264,40 +264,49 @@ void UweVizAudioProcessorEditor::timerCallback() {
               float maxLin = 0.0f;
               for (auto m : linearMags) if (m > maxLin) maxLin = m;
               
-              // More sensitive: 0.00001f for quiet bass
-              if (maxLin > 0.00001f) {
+              // Very sensitive: 0.000001f for extremely quiet signals
+              if (maxLin > 1.0e-6f) {
+                  // Normalize for HPS to prevent numerical underflow
+                  std::vector<float> normMags = linearMags;
+                  float invMax = 1.0f / maxLin;
+                  for (auto& m : normMags) m *= invMax;
+
                   for (size_t i = 1; i < hps.size(); ++i) {
-                      float product = linearMags[i];
+                      float product = normMags[i];
                       for (int j = 2; j <= hpsOrder; ++j) {
-                          product *= linearMags[i * j];
+                          product *= normMags[i * j];
                       }
                       hps[i] = product;
                   }
                   
-                  int minBin = (int)std::ceil(20.0f * (float)linearMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
+                  int minBin = (int)std::ceil(25.0f * (float)normMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
                   auto hpsStart = hps.begin() + minBin;
-                  auto maxHpsIt = std::max_element(hpsStart, hps.end());
-                  int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
-                  float peakVal = *maxHpsIt;
-                  
-                  float sumHps = 0.0f;
-                  for (auto hVal : hps) sumHps += hVal;
-                  float avgHps = sumHps / (float)hps.size();
-                  confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
-                  
-                  if (confidence > 1.5f) { // Lower threshold for more robust tracking
-                      float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)linearMags.size();
+                  if (hpsStart < hps.end()) {
+                      auto maxHpsIt = std::max_element(hpsStart, hps.end());
+                      int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
+                      float peakVal = *maxHpsIt;
                       
-                      freqHistory.push_back(freq);
-                      if (freqHistory.size() > 5) freqHistory.pop_front();
+                      float sumHps = 0.0f;
+                      for (size_t i = minBin; i < hps.size(); ++i) sumHps += hps[i];
+                      float avgHps = sumHps / (float)(hps.size() - minBin);
                       
-                      float sumFreq = 0.0f;
-                      for (float f : freqHistory) sumFreq += f;
-                      smoothedFreq = sumFreq / (float)freqHistory.size();
+                      confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
                       
-                      targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
+                      if (confidence > 1.2f) { // Very loose threshold for testing
+                          float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)normMags.size();
+                          
+                          freqHistory.push_back(freq);
+                          if (freqHistory.size() > 5) freqHistory.pop_front();
+                          
+                          float sumFreq = 0.0f;
+                          for (float f : freqHistory) sumFreq += f;
+                          smoothedFreq = sumFreq / (float)freqHistory.size();
+                          
+                          targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
+                      } else {
+                          targetNoteStr = "---";
+                      }
                   } else {
-                      if (!freqHistory.empty()) freqHistory.pop_front();
                       targetNoteStr = "---";
                   }
               } else {
@@ -305,12 +314,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
                   targetNoteStr = "---";
               }
           }
-          
-          if (targetNoteStr == "---") {
-              currentNoteStr = "---";
-          } else {
-              currentNoteStr = targetNoteStr;
-          }
+          currentNoteStr = targetNoteStr;
       }
 
       // Manual Clear Flag after ALL analysis consumes the data

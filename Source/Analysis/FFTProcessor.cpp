@@ -49,8 +49,8 @@ bool FFTProcessor::getMagnitudes (std::vector<float>& result)
         result[i] = juce::Decibels::gainToDecibels (juce::jmax (mag, 1.0e-9f), -120.0f);
     }
 
-    fftReady = false; // We'll keep this one as the 'main' reset for now, 
-                      // but ideally we clear it at the very end of the frame.
+    // Flag is now cleared manually by the consumer (Editor) 
+    // to allow multiple analysis modules to use the same frame.
     return true;
 }
 bool FFTProcessor::getLinearMagnitudes (std::vector<float>& result)
