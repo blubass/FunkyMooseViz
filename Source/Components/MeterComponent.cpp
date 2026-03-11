@@ -240,6 +240,6 @@ void LoudnessMeterComponent::paint(juce::Graphics &g) {
   g.fillRoundedRectangle(fill, 4.0f);
 
   g.setColour(juce::Colour::fromRGB(220, 220, 220));
-  g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+  g.setFont(juce::FontOptions(11.0f).withStyle("Bold"));
   g.drawText("LOUD", labelArea.toNearestInt(), juce::Justification::centred, false);
 }

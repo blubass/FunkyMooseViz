@@ -10,13 +10,13 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   addAndMakeVisible(titleLabel);
   titleLabel.setText("FUNKY MOOSE", juce::dontSendNotification);
   titleLabel.setJustificationType(juce::Justification::centredLeft);
-  titleLabel.setFont(juce::FontOptions(26.0f, juce::Font::bold));
+  titleLabel.setFont(juce::FontOptions(26.0f).withStyle("Bold"));
   titleLabel.setColour(juce::Label::textColourId, juce::Colour::fromRGB(88, 174, 219));
 
   addAndMakeVisible(subTitleLabel);
   subTitleLabel.setText("ANALYZER STRATEGY", juce::dontSendNotification);
   subTitleLabel.setJustificationType(juce::Justification::centredLeft);
-  subTitleLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+  subTitleLabel.setFont(juce::FontOptions(13.0f).withStyle("Bold"));
   subTitleLabel.setColour(juce::Label::textColourId,
                           juce::Colour::fromRGB(200, 200, 200));
 
@@ -79,7 +79,7 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   updateModeButtons();
   addAndMakeVisible(pitchLabel);
   pitchLabel.setJustificationType(juce::Justification::centred);
-  pitchLabel.setFont(juce::FontOptions(22.0f, juce::Font::bold));
+  pitchLabel.setFont(juce::FontOptions(22.0f).withStyle("Bold"));
   pitchLabel.setColour(juce::Label::textColourId, juce::Colour::fromRGB(88, 174, 219));
   pitchLabel.setText("---", juce::dontSendNotification);
 
@@ -137,7 +137,7 @@ void UweVizAudioProcessorEditor::paint(juce::Graphics &g) {
 
   if (frozen) {
     g.setColour(juce::Colour::fromRGBA(255, 220, 140, 160));
-    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(12.0f).withStyle("Bold"));
     g.drawText("Analyzer frozen",
                juce::Rectangle<int>(getWidth() - 200, 30, 140, 16),
                juce::Justification::centredRight, false);

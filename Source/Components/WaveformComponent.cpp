@@ -133,7 +133,7 @@ void WaveformComponent::paint(juce::Graphics &g) {
 
   // Labels
   g.setColour(juce::Colour::fromRGB(200, 200, 200));
-  g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+  g.setFont(juce::FontOptions(12.0f).withStyle("Bold"));
   g.drawText("VECTOR", scopeArea.toNearestInt(), juce::Justification::centredBottom, false);
   g.drawText("WAVEFORM", inner.toNearestInt(), juce::Justification::centredBottom, false);
 }

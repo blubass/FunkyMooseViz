@@ -5,7 +5,6 @@ void ElchComponent::paint(juce::Graphics &g) {
   g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
   auto bounds = getLocalBounds().toFloat();
 
-  // 1. Draw Static Background (Clean Dark Plate)
   if (!cachedBackground.isValid()) {
     updateCachedBackground();
   }
@@ -71,11 +70,11 @@ void ElchComponent::paint(juce::Graphics &g) {
     auto drawHalo = [&](juce::Point<float> pt, juce::Colour c, float r,
                         float intensityScale = 1.0f) {
       g.saveState();
-      // Much larger, softer falloff for the 'Halo' vibe
-      float rGlow = r * (3.0f + 1.5f * inputLevel);
+      // Reduced falloff for cleaner viz vibe
+      float rGlow = r * (1.5f + 0.5f * inputLevel);
 
-      // Boosted intensity to ~95% maximum (was 85%)
-      float finalAlpha = std::min(0.95f, 0.85f * bright) * intensityScale;
+      // Reduced intensity
+      float finalAlpha = std::min(0.6f, 0.5f * bright) * intensityScale;
 
       juce::Colour cCore = c.brighter(0.5f).withAlpha(finalAlpha);
       juce::Colour cMid = c.withAlpha(finalAlpha * 0.75f);
@@ -104,50 +103,7 @@ void ElchComponent::paint(juce::Graphics &g) {
     // Antlers: Even subtler halos (0.6 intensity scale), no distinct 'balls'
     drawHalo(leftAntler, baseL, radius * 0.5f, 0.6f);
     drawHalo(rightAntler, baseR, radius * 0.5f, 0.6f);
-
-    // --- DIAMOND SPARKLE ---
-    auto drawSparkle = [&](juce::Point<float> pt, float phase) {
-      float s = 10.0f * bright;
-      float time = (float)juce::Time::getMillisecondCounterHiRes() * 0.008f;
-      float rot = time + phase;
-      g.saveState();
-      g.setColour(juce::Colours::white.withAlpha(1.0f * bright));
-      g.addTransform(juce::AffineTransform::rotation(rot, pt.x, pt.y));
-      g.fillRect(pt.x - s * 0.5f, pt.y - s * 0.06f, s, s * 0.12f);
-      g.fillRect(pt.x - s * 0.06f, pt.y - s * 0.5f, s * 0.12f, s);
-      g.restoreState();
-    };
-
-    if (bright > 0.40f) {
-      drawSparkle(leftCenter.translated(-radius * 0.4f, -radius * 0.35f), 0.0f);
-      drawSparkle(rightCenter.translated(radius * 0.4f, -radius * 0.35f), 3.3f);
-    }
   }
-}
-
-void ElchComponent::setMooseState(float inRms, float outRms, float compGRdb,
-                                  bool punchOn) {
-  const float eps = 1.0e-6f;
-  const float outDb = 20.0f * std::log10(std::max(eps, outRms));
-  const float thrDb = activationThresholdDb;
-  float act = juce::jlimit(0.0f, 1.0f, (outDb - thrDb) / (-20.0f - thrDb));
-  act = act * act;
-
-  const float outN = juce::jlimit(0.0f, 1.0f, outRms * 1.6f) * act;
-  const float inN = juce::jlimit(0.0f, 1.0f, inRms * 1.6f) * act;
-  float grN = std::sqrt(juce::jlimit(0.0f, 1.0f, compGRdb / 12.0f));
-
-  glowAmount = glowAmount * 0.88f +
-               (juce::jlimit(0.0f, 1.0f, outN * 0.85f + grN * 0.55f)) * 0.12f;
-  eyeAmount = eyeAmount * 0.84f +
-              (punchOn ? juce::jlimit(0.0f, 1.0f, 0.32f + outN * 0.72f)
-                       : juce::jlimit(0.0f, 1.0f, outN * 0.62f)) *
-                  0.16f;
-
-  inputLevel = inputLevel * 0.92f + (inN * 1.2f) * 0.08f; // More smoothing, less gain
-
-  peakLevel = peakLevel * 0.90f + outN * 0.10f; // More smoothing
-  repaint();
 }
 
 void ElchComponent::resized() { updateCachedBackground(); }
@@ -194,15 +150,6 @@ void ElchComponent::updateCachedBackground() {
   g.drawRect(bounds.toFloat(), 1.5f);
   g.setColour(juce::Colours::white.withAlpha(0.05f));
   g.drawRect(bounds.toFloat().reduced(0.8f), 0.5f);
-
-  // GUARANTEED NO MASKING/OVALS IN BACKGROUND
-}
-
-void ElchComponent::setGlowPalette(juce::Colour normal, juce::Colour punch,
-                                   juce::Colour heavy) {
-  glowNormal = normal;
-  glowPunch = punch;
-  glowHeavy = heavy;
 }
 
 void ElchComponent::setVizMode(VizMode newMode) {
@@ -211,17 +158,9 @@ void ElchComponent::setVizMode(VizMode newMode) {
   if (vizMode == VizMode::LR) {
     eyeGlowColourL = juce::Colour::fromRGB(80, 220, 255);
     eyeGlowColourR = juce::Colour::fromRGB(255, 170, 60);
-
-    glowNormal = juce::Colour::fromRGB(70, 210, 255);
-    glowPunch = juce::Colour::fromRGB(150, 235, 255);
-    glowHeavy = juce::Colour::fromRGB(255, 230, 180);
   } else {
     eyeGlowColourL = juce::Colour::fromRGB(255, 205, 90);
     eyeGlowColourR = juce::Colour::fromRGB(255, 150, 70);
-
-    glowNormal = juce::Colour::fromRGB(255, 185, 70);
-    glowPunch = juce::Colour::fromRGB(255, 220, 120);
-    glowHeavy = juce::Colour::fromRGB(255, 120, 70);
   }
 
   repaint();

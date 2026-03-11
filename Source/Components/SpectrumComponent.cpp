@@ -292,11 +292,11 @@ void SpectrumComponent::paint(juce::Graphics &g) {
   drawPeakLine(rightPeakPath, juce::Colour::fromRGBA(255, 190, 96, 200));
 
   g.setColour(juce::Colour::fromRGBA(240, 245, 250, 138));
-  g.setFont(juce::FontOptions(14.0f, juce::Font::bold));
+  g.setFont(juce::FontOptions(14.0f).withStyle("Bold"));
   g.drawText("SPECTRUM", getLocalBounds().reduced(16, 10),
              juce::Justification::topLeft, false);
 
-  g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+  g.setFont(juce::FontOptions(11.0f).withStyle("Bold"));
 
   if (displayMode == DisplayMode::LR) {
     g.setColour(juce::Colour::fromRGBA(132, 238, 255, 180));

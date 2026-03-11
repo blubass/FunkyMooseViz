@@ -27,6 +27,7 @@ juce_add_plugin(FunkyMooseViz
     COPY_PLUGIN_AFTER_BUILD FALSE
     PLUGIN_MANUFACTURER_CODE UweF
     PLUGIN_CODE FmVz
+    BUNDLE_ID "at.uwefelchle.funkymooseviz"
     FORMATS VST3 AU Standalone
     PRODUCT_NAME "Funky Moose Viz"
     MICROPHONE_PERMISSION_ENABLED TRUE

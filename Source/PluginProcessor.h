@@ -34,8 +34,16 @@ public:
     const juce::String getProgramName (int) override { return {}; }
     void changeProgramName (int, const juce::String&) override {}
 
-    void getStateInformation (juce::MemoryBlock&) override {}
-    void setStateInformation (const void*, int) override {}
+    void getStateInformation (juce::MemoryBlock& destData) override {
+        juce::MemoryOutputStream stream(destData, true);
+        stream.writeBool(analyzeOnly);
+    }
+    
+    void setStateInformation (const void* data, int sizeInBytes) override {
+        juce::MemoryInputStream stream(data, static_cast<size_t>(sizeInBytes), false);
+        if (sizeInBytes > 0)
+            analyzeOnly = stream.readBool();
+    }
 
     FFTProcessor& getFFTProcessorLeft()  { return fftProcessorLeft; }
     FFTProcessor& getFFTProcessorRight() { return fftProcessorRight; }

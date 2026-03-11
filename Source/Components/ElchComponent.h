@@ -38,16 +38,8 @@ public:
     repaint();
   }
 
-  // Unified UI API: feed in/out RMS, compressor GR (dB) and Punch state.
-  // The component will smooth internally to avoid jitter/flicker.
   void setVizMode (VizMode newMode);
   void setVizSignal (float rms, float peak);
-  void setMooseState(float inRms, float outRms, float compGRdb, bool punchOn);
-
-  // Optional: tweak responsiveness. Defaults are musical.
-  void setActivationThresholdDb(float db) { activationThresholdDb = db; }
-  void setGlowPalette(juce::Colour normal, juce::Colour punch,
-                      juce::Colour heavy);
 
   void paint(juce::Graphics &g) override;
   void resized() override;
@@ -57,16 +49,6 @@ private:
   // Optimization: Cached background (Static Elch + Vignette + Inner Shadow)
   juce::Image cachedBackground;
   void updateCachedBackground();
-  // Threshold: below this output level (dBFS) the moose stays mostly idle.
-  float activationThresholdDb{-50.0f};
-
-  // Glow palette (can be overridden via setGlowPalette)
-  juce::Colour glowNormal{
-      juce::Colour::fromFloatRGBA(1.0f, 0.72f, 0.25f, 1.0f)}; // warm amber
-  juce::Colour glowPunch{
-      juce::Colour::fromFloatRGBA(0.25f, 0.85f, 1.0f, 1.0f)}; // cyan
-  juce::Colour glowHeavy{
-      juce::Colour::fromFloatRGBA(1.0f, 0.25f, 0.20f, 1.0f)}; // red
   float eyeFlash{0.0f};                                       // 0..1 peak flash
   juce::Colour eyeGlowColourL{
       juce::Colour::fromRGB(80, 220, 255)}; // left eye (cyan)
