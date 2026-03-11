@@ -48,17 +48,10 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DJUCE_DIR=JUCE  # Only used if Windows
-          cmake -B build -G "Xcode" -DJUCE_DIR=JUCE # Only used if Mac
-        shell: bash
-        # Note: We need to handle the generator based on OS
-        
-      - name: Override Configure CMake (OS specific)
-        run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
             cmake -B build -G "Visual Studio 17 2022" -A x64 -DJUCE_DIR=JUCE
           else
-            cmake -B build -G "Xcode" -DJUCE_DIR=JUCE
+            cmake -B build -G Xcode -DJUCE_DIR=JUCE
           fi
         shell: bash
 
