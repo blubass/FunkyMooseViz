@@ -3,7 +3,7 @@
 
 UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p) {
-  setSize(960, 620);
+  setSize(p.lastUIWidth, p.lastUIHeight);
   setResizable(true, true);
   setResizeLimits(760, 520, 1700, 1100);
   addAndMakeVisible(titleLabel);
@@ -173,6 +173,9 @@ void UweVizAudioProcessorEditor::paint(juce::Graphics &g) {
 }
 
 void UweVizAudioProcessorEditor::resized() {
+  audioProcessor.lastUIWidth = getWidth();
+  audioProcessor.lastUIHeight = getHeight();
+  
   auto area = getLocalBounds().reduced(24);
   auto header = area.removeFromTop(88);
 

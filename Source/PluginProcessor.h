@@ -40,6 +40,8 @@ public:
         stream.writeInt(displayMode);
         stream.writeBool(frozen);
         stream.writeInt(displayRangeDb);
+        stream.writeInt(lastUIWidth);
+        stream.writeInt(lastUIHeight);
     }
     
     void setStateInformation (const void* data, int sizeInBytes) override {
@@ -52,12 +54,19 @@ public:
             frozen = stream.readBool();
         if (!stream.isExhausted())
             displayRangeDb = stream.readInt();
+        if (!stream.isExhausted())
+            lastUIWidth = stream.readInt();
+        if (!stream.isExhausted())
+            lastUIHeight = stream.readInt();
     }
 
     FFTProcessor& getFFTProcessorLeft()  { return fftProcessorLeft; }
     FFTProcessor& getFFTProcessorRight() { return fftProcessorRight; }
     FFTProcessor& getFFTProcessorMid()   { return fftProcessorMid; }
     FFTProcessor& getFFTProcessorSide()  { return fftProcessorSide; }
+
+    int lastUIWidth = 960;
+    int lastUIHeight = 620;
 
     WaveformBuffer& getWaveformBuffer()  { return waveformBuffer; }
     LevelMeterSource& getMeterSource()   { return meterSource; }

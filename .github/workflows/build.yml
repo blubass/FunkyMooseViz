@@ -69,7 +69,7 @@ jobs:
           cp -R "build/FunkyMooseViz_artefacts/Release/AU/Funky Moose Viz.component" release/
           cp -R "build/FunkyMooseViz_artefacts/Release/VST3/Funky Moose Viz.vst3" release/
           cp -R "build/FunkyMooseViz_artefacts/Release/Standalone/Funky Moose Viz.app" release/
-          zip -r FunkyMooseViz_Mac.zip release/
+          zip -r "FunkyMooseViz-${{ github.ref_name }}-macOS.zip" release/
 
       - name: Package Artifacts (Windows)
         if: runner.os == 'Windows'
@@ -78,15 +78,15 @@ jobs:
           mkdir -p release
           cp -r "build/FunkyMooseViz_artefacts/Release/VST3/Funky Moose Viz.vst3" release/
           cp "build/FunkyMooseViz_artefacts/Release/Standalone/Funky Moose Viz.exe" release/
-          7z a FunkyMooseViz_Windows.zip ./release/*
+          7z a "FunkyMooseViz-${{ github.ref_name }}-Windows.zip" ./release/*
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            FunkyMooseViz_Mac.zip
-            FunkyMooseViz_Windows.zip
+            FunkyMooseViz-${{ github.ref_name }}-macOS.zip
+            FunkyMooseViz-${{ github.ref_name }}-Windows.zip
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

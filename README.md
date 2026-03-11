@@ -1,10 +1,12 @@
 # 🦌 Funky Moose Viz
-**Boutique-style JUCE audio visualizer plugin for spectrum, waveform, vectorscope and pitch detection.**
+**Funky Moose Viz is a boutique-style visual analysis plugin for bass, stereo image and musical pitch awareness.**
 
 ![Funky Moose Viz UI](screenshot.png)
 
 ## 🤘 Why it exists
-Most visualizers are either too clinical or too bloated. **Funky Moose Viz** was built to provide a focused, high-performance analysis tool that looks like high-end studio hardware. It's the perfect companion for the **Funky Moose Amp**, bringing the same metallic aesthetic and "funky" energy to your master bus or instrument tracks.
+Most visualizers are either too clinical or too bloated. **Funky Moose Viz** provides a focused, high-performance analysis tool that doesn't just measure audio—it visualizes its character. It's the perfect companion for the **Funky Moose Amp**, bringing the same metallic aesthetic and "funky" energy to your master bus or instrument tracks.
+
+*Ein musikalischer Visualizer für Bass, Mix und Stereo-Bild – nicht klinisch, sondern inspirierend.*
 
 ## ✨ Key Features
 - **Pro Spectrum Analyzer**: Stereo & Mid/Side modes with a logarithmic scale (20Hz - 20kHz).
@@ -14,7 +16,7 @@ Most visualizers are either too clinical or too bloated. **Funky Moose Viz** was
 - **Waveform Monitor**: Real-time signal monitoring.
 - **High-End Pitch Detection**: Sub-bin accurate frequency detection with musical note translation.
 - **Dynamic Moose API**: Our mascot pulses and glows in sync with your audio levels.
-- **State Persistence**: Remembers your settings (M/S mode, Range, etc.) between sessions.
+- **State Persistence**: Remembers your settings (M/S mode, Range, window size, etc.) between sessions.
 
 ## 🎧 Typical Use Cases
 - **Check your Low-End**: Use the high-precision spectrum to ensure your Kick and Bass are sitting perfectly in the mix.
@@ -40,14 +42,16 @@ Most visualizers are either too clinical or too bloated. **Funky Moose Viz** was
 - **Audio Unit (AU)**
 - **Standalone Application**
 
-## ⚠️ Known Limitations
-- Pitch detection works best on monophonic signals (Bass, Vocals, Lead).
-- Spectrogram frequency resolution is linked to the FFT size.
+## ⚠️ Known Issues / Limitations
+- **Pitch Detection**: Works best on monophonic signals. Complex polyphonic material might cause jitter.
+- **CPU Usage**: The high-refresh-rate vector scope can be taxing on older systems.
+- **M/S Refinement**: We are still fine-tuning the balance of the Mid/Side visual weights.
 
 ## 🗺 Roadmap
-- [ ] Adjustable FFT sizes for higher resolution.
-- [ ] Custom color themes.
-- [ ] Preset Management for analysis setups.
+- [ ] **Advanced Pitch Engine**: Transitioning to a hybrid time/frequency domain detector for better bass accuracy.
+- [ ] **Custom Color Themes**: User-definable palettes for the spectrum and UI accents.
+- [ ] **Preset Management**: Save your favorite analysis setups.
+- [ ] **Optimization**: Moving path building to background threads for even smoother UI performance.
 
 ---
 **Built with [JUCE](https://juce.com/).**  
