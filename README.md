@@ -1,5 +1,5 @@
 # 🦌 Funky Moose Viz
-**🫎 A musical visualizer for bass players, mix engineers and sound designers — built with character, not just code.**
+**A boutique-style audio visualizer plugin for musicians and mix engineers — clear spectrum, waveform & vectorscope feedback with a vintage-inspired UI.**
 
 Funky Moose Viz is a custom-built JUCE plugin designed to visually support musical decision making. It combines spectrum analysis, waveform display, vectorscope and pitch detection in a cohesive, character-driven interface.
 
