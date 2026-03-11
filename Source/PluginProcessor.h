@@ -1,0 +1,86 @@
+#pragma once
+
+#include <juce_audio_utils/juce_audio_utils.h>
+#include <juce_dsp/juce_dsp.h>
+#include <juce_gui_extra/juce_gui_extra.h>
+#include "Analysis/FFTProcessor.h"
+#include "Analysis/WaveformBuffer.h"
+#include "Analysis/LevelMeterSource.h"
+#include <algorithm>
+
+class UweVizAudioProcessor : public juce::AudioProcessor
+{
+public:
+    UweVizAudioProcessor();
+    ~UweVizAudioProcessor() override;
+
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override;
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override { return true; }
+
+    const juce::String getName() const override { return JucePlugin_Name; }
+    bool acceptsMidi() const override { return false; }
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+    double getTailLengthSeconds() const override { return 0.0; }
+
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram (int) override {}
+    const juce::String getProgramName (int) override { return {}; }
+    void changeProgramName (int, const juce::String&) override {}
+
+    void getStateInformation (juce::MemoryBlock&) override {}
+    void setStateInformation (const void*, int) override {}
+
+    FFTProcessor& getFFTProcessorLeft()  { return fftProcessorLeft; }
+    FFTProcessor& getFFTProcessorRight() { return fftProcessorRight; }
+    FFTProcessor& getFFTProcessorMid()   { return fftProcessorMid; }
+    FFTProcessor& getFFTProcessorSide()  { return fftProcessorSide; }
+
+    WaveformBuffer& getWaveformBuffer()  { return waveformBuffer; }
+    LevelMeterSource& getMeterSource()   { return meterSource; }
+
+    void setAnalyzeOnly (bool shouldBeAnalyzeOnly) { analyzeOnly = shouldBeAnalyzeOnly; }
+    bool getAnalyzeOnly() const                    { return analyzeOnly; }
+
+    float getDominantFrequency() {
+        std::vector<float> mags;
+        if (fftProcessorMid.getMagnitudes(mags)) {
+            auto maxIt = std::max_element(mags.begin(), mags.end());
+            int bin = (int)std::distance(mags.begin(), maxIt);
+            return (float)bin * ((float)fftProcessorMid.getSampleRate() / (float)fftProcessorMid.getFFTSize());
+        }
+        return 0.0f;
+    }
+
+    static juce::String frequencyToNote(float freq) {
+        if (freq <= 0.0f) return "---";
+        const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        float midiNote = 12.0f * std::log2(freq / 440.0f) + 69.0457f;
+        int noteNum = (int)std::round(midiNote);
+        if (noteNum < 0) return "---";
+        int octave = (noteNum / 12) - 1;
+        return juce::String(notes[noteNum % 12]) + juce::String(octave);
+    }
+
+private:
+    FFTProcessor fftProcessorLeft;
+    FFTProcessor fftProcessorRight;
+    FFTProcessor fftProcessorMid;
+    FFTProcessor fftProcessorSide;
+
+    WaveformBuffer waveformBuffer;
+    LevelMeterSource meterSource;
+
+    std::vector<float> tempMidBuffer;
+    std::vector<float> tempSideBuffer;
+
+    bool analyzeOnly = true;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UweVizAudioProcessor)
+};

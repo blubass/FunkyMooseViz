@@ -1,0 +1,109 @@
+#include "PluginProcessor.h"
+#include "PluginEditor.h"
+
+UweVizAudioProcessor::UweVizAudioProcessor()
+    : AudioProcessor (BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+#endif
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+    )
+{
+}
+
+UweVizAudioProcessor::~UweVizAudioProcessor() = default;
+
+void UweVizAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    fftProcessorLeft.prepare  (sampleRate, samplesPerBlock);
+    fftProcessorRight.prepare (sampleRate, samplesPerBlock);
+    fftProcessorMid.prepare   (sampleRate, samplesPerBlock);
+    fftProcessorSide.prepare  (sampleRate, samplesPerBlock);
+
+    waveformBuffer.prepare (2048);
+    meterSource.prepare (sampleRate, samplesPerBlock);
+
+    const auto tempSize = (size_t) juce::jmax (samplesPerBlock, 2048);
+    tempMidBuffer.assign (tempSize, 0.0f);
+    tempSideBuffer.assign (tempSize, 0.0f);
+}
+
+void UweVizAudioProcessor::releaseResources() {}
+
+bool UweVizAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+{
+#if JucePlugin_IsMidiEffect
+    juce::ignoreUnused (layouts);
+    return true;
+#else
+    const auto mainOut = layouts.getMainOutputChannelSet();
+    if (mainOut != juce::AudioChannelSet::mono() && mainOut != juce::AudioChannelSet::stereo())
+        return false;
+
+   #if ! JucePlugin_IsSynth
+    if (layouts.getMainInputChannelSet() != mainOut)
+        return false;
+   #endif
+
+    return true;
+#endif
+}
+
+void UweVizAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    juce::ignoreUnused (midiMessages);
+    juce::ScopedNoDenormals noDenormals;
+
+    const int numSamples  = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+
+    meterSource.processBlock (buffer);
+
+    if ((int) tempMidBuffer.size() < numSamples)
+        tempMidBuffer.resize ((size_t) numSamples, 0.0f);
+
+    if ((int) tempSideBuffer.size() < numSamples)
+        tempSideBuffer.resize ((size_t) numSamples, 0.0f);
+
+    const float* left  = (numChannels > 0) ? buffer.getReadPointer (0) : nullptr;
+    const float* right = (numChannels > 1) ? buffer.getReadPointer (1) : left;
+
+    if (left != nullptr)
+        fftProcessorLeft.pushSamples (left, numSamples);
+
+    if (right != nullptr)
+        fftProcessorRight.pushSamples (right, numSamples);
+
+    if (left != nullptr && right != nullptr)
+    {
+        for (int i = 0; i < numSamples; ++i)
+        {
+            const float l = left[i];
+            const float r = right[i];
+            tempMidBuffer[(size_t) i]  = 0.5f * (l + r);
+            tempSideBuffer[(size_t) i] = 0.5f * (l - r);
+        }
+
+        fftProcessorMid.pushSamples  (tempMidBuffer.data(), numSamples);
+        fftProcessorSide.pushSamples (tempSideBuffer.data(), numSamples);
+    }
+
+    if (left != nullptr)
+        waveformBuffer.pushStereoSamples (left, right, numSamples);
+
+    for (int ch = numChannels; ch < getTotalNumOutputChannels(); ++ch)
+        buffer.clear (ch, 0, numSamples);
+}
+
+juce::AudioProcessorEditor* UweVizAudioProcessor::createEditor()
+{
+    return new UweVizAudioProcessorEditor (*this);
+}
+
+
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new UweVizAudioProcessor();
+}
