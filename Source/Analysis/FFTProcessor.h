@@ -11,6 +11,7 @@ public:
     void prepare (double sampleRate, int samplesPerBlock);
     void pushSamples (const float* samples, int numSamples);
     bool getMagnitudes (std::vector<float>& result);
+    bool getLinearMagnitudes (std::vector<float>& result);
 
     double getSampleRate() const noexcept { return currentSampleRate; }
     int getFFTSize() const noexcept       { return fftSize; }

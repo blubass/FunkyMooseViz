@@ -52,3 +52,18 @@ bool FFTProcessor::getMagnitudes (std::vector<float>& result)
     fftReady = false;
     return true;
 }
+bool FFTProcessor::getLinearMagnitudes (std::vector<float>& result)
+{
+    if (! fftReady)
+        return false;
+
+    result.resize (fftSize / 2);
+
+    for (size_t i = 0; i < result.size(); ++i)
+    {
+        result[i] = fftData[i] / (float) fftSize;
+    }
+
+    return true; // We don't reset fftReady here yet, so both calls can succeed in some cases, 
+                 // but typically we'll call one or the other.
+}

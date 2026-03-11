@@ -252,46 +252,68 @@ void UweVizAudioProcessorEditor::timerCallback() {
   audioProcessor.getWaveformBuffer().getStereoWaveform(waveformL, waveformR);
   waveformComponent.setWaveform(waveformL, waveformR);
 
-  // Pitch detection logic
-  if (magsA.size() > 10) {
-      // Find peak in a sensible range (ignore DC and very low rumble)
-      int minBin = (int)std::ceil(20.0f * (float)magsA.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
-      auto searchStart = magsA.begin() + minBin;
-      auto maxIt = std::max_element(searchStart, magsA.end());
-      float maxDb = *maxIt;
-      
-      juce::String calcNote = "---";
-      
-      if (maxDb > -40.0f && !frozen) {
-          int bin = (int)std::distance(magsA.begin(), maxIt);
+  // Pitch detection logic (HPS - Harmonic Product Spectrum)
+  std::vector<float> linearMags;
+  if (!frozen && audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(linearMags)) {
+      if (linearMags.size() > 10) {
+          int hpsOrder = 4;
+          std::vector<float> hps(linearMags.size() / hpsOrder, 1.0f);
           
-          float binFreq = (float)bin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)magsA.size();
-          float domFreq = binFreq;
+          // Find first peak in linear spectrum to ignore noise below some threshold
+          float maxLin = 0.0f;
+          for (auto m : linearMags) if (m > maxLin) maxLin = m;
           
-          // Parabolic interpolation for sub-bin accuracy
-          if (bin > 0 && bin < (int)magsA.size() - 1) {
-              float g1 = juce::Decibels::decibelsToGain(magsA[(size_t)bin - 1]);
-              float g2 = juce::Decibels::decibelsToGain(magsA[(size_t)bin]);
-              float g3 = juce::Decibels::decibelsToGain(magsA[(size_t)bin + 1]);
-              
-              float denominator = (g1 - 2.0f * g2 + g3);
-              if (std::abs(denominator) > 1e-6f) {
-                  float p = 0.5f * (g1 - g3) / denominator;
-                  domFreq = ((float)bin + p) * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)magsA.size();
+          if (maxLin > 0.0001f) {
+              // Calculate HPS
+              for (size_t i = 1; i < hps.size(); ++i) {
+                  float product = linearMags[i];
+                  for (int j = 2; j <= hpsOrder; ++j) {
+                      product *= linearMags[i * j];
+                  }
+                  hps[i] = product;
               }
+              
+              // Find peak in HPS (ignore DC/bins below 20Hz)
+              int minBin = (int)std::ceil(20.0f * (float)linearMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
+              auto hpsStart = hps.begin() + minBin;
+              auto maxHpsIt = std::max_element(hpsStart, hps.end());
+              int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
+              float peakVal = *maxHpsIt;
+              
+              // Confidence calculation (peak vs average)
+              float sumHps = 0.0f;
+              for (auto hVal : hps) sumHps += hVal;
+              float avgHps = sumHps / (float)hps.size();
+              confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
+              
+              if (confidence > 2.0f) { // Threshold for "valid" pitch
+                  float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)linearMags.size();
+                  
+                  // Smoothing (Moving Average / Median)
+                  freqHistory.push_back(freq);
+                  if (freqHistory.size() > 5) freqHistory.pop_front();
+                  
+                  float sumFreq = 0.0f;
+                  for (float f : freqHistory) sumFreq += f;
+                  smoothedFreq = sumFreq / (float)freqHistory.size();
+                  
+                  targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
+              } else {
+                  if (!freqHistory.empty()) freqHistory.pop_front();
+                  targetNoteStr = "---";
+              }
+          } else {
+              freqHistory.clear();
+              targetNoteStr = "---";
           }
-          
-          calcNote = UweVizAudioProcessor::frequencyToNote(domFreq);
       }
       
-      if (calcNote == targetNoteStr) {
-          if (noteHoldCount < 10) noteHoldCount++;
-          if (noteHoldCount >= 3) {
-              currentNoteStr = targetNoteStr;
-          }
-      } else {
-          targetNoteStr = calcNote;
+      // Update display string
+      if (targetNoteStr == "---") {
           noteHoldCount = 0;
+          currentNoteStr = "---";
+      } else {
+          currentNoteStr = targetNoteStr;
       }
   }
 

@@ -8,6 +8,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <deque>
 
 class UweVizAudioProcessorEditor : public juce::AudioProcessorEditor,
                                    private juce::Timer {
@@ -40,6 +41,10 @@ private:
   juce::String currentNoteStr = "---";
   juce::String targetNoteStr = "---";
   int noteHoldCount = 0;
+
+  std::deque<float> freqHistory;
+  float smoothedFreq = 0.0f;
+  float confidence = 0.0f;
 
   juce::TextButton lrButton{"L/R"};
   juce::TextButton msButton{"M/S"};
