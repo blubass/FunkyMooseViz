@@ -14,7 +14,7 @@ endif()
 
 juce_add_binary_data(FunkyMooseVizAssets
     SOURCES
-        Source/Assets/elch_vintage_clean_trans.png
+        Source/Assets/image.png
 )
 
 juce_add_plugin(FunkyMooseViz
@@ -32,6 +32,7 @@ juce_add_plugin(FunkyMooseViz
     PRODUCT_NAME "Funky Moose Viz"
     MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Analyzer-Anzeige."
+    ICON_BIG "Source/Assets/FunkyMoose.icns"
 )
 
 target_sources(FunkyMooseViz PRIVATE

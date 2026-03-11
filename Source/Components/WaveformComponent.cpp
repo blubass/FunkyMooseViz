@@ -104,8 +104,24 @@ void WaveformComponent::paint(juce::Graphics &g) {
   // --- WAVEFORM ---
   // Draw merged/mid waveform on the right
   const float centerY = inner.getCentreY();
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 15));
-  g.drawLine(inner.getX(), centerY, inner.getRight(), centerY, 0.8f);
+  
+  // Waveform Grid
+  g.setColour(juce::Colour::fromRGBA(88, 174, 219, 15));
+  int numVerticalLines = 8;
+  float stepX = inner.getWidth() / (float)numVerticalLines;
+  for (int i = 1; i < numVerticalLines; ++i) {
+      float x = inner.getX() + i * stepX;
+      g.drawVerticalLine((int)x, inner.getY(), inner.getBottom());
+  }
+  int numHorizontalLines = 6;
+  float stepY = inner.getHeight() / (float)numHorizontalLines;
+  for (int i = 1; i < numHorizontalLines; ++i) {
+      float y = inner.getY() + i * stepY;
+      g.drawHorizontalLine((int)y, inner.getX(), inner.getRight());
+  }
+
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 25));
+  g.drawLine(inner.getX(), centerY, inner.getRight(), centerY, 1.0f);
 
   if (!waveformL.empty()) {
     juce::Path p;
@@ -125,10 +141,10 @@ void WaveformComponent::paint(juce::Graphics &g) {
       else p.lineTo(x, y);
     }
 
-    g.setColour(juce::Colour::fromRGB(190, 100, 255).withAlpha(0.4f));
-    g.strokePath(p, juce::PathStrokeType(3.0f));
+    g.setColour(juce::Colour::fromRGB(190, 100, 255).withAlpha(0.2f));
+    g.strokePath(p, juce::PathStrokeType(2.0f));
     g.setColour(juce::Colour::fromRGB(220, 140, 255));
-    g.strokePath(p, juce::PathStrokeType(1.0f));
+    g.strokePath(p, juce::PathStrokeType(0.8f));
   }
 
   // Labels

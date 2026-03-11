@@ -20,6 +20,7 @@ public:
     void setAnalysisInfo (double newSampleRate, int newFFTSize);
     void setDisplayMode (DisplayMode newMode);
     void setFrozen (bool shouldBeFrozen);
+    void setDisplayRange (float newRangeDb);
     void resetPeakTrace();
     void mouseDoubleClick (const juce::MouseEvent&) override;
 
@@ -40,10 +41,15 @@ private:
     static constexpr int maxSpectrogramFrames = 64;
     std::deque<std::vector<float>> spectrogramFrames;
 
+    std::vector<int> peakHoldLeft;
+    std::vector<int> peakHoldRight;
+    static constexpr int peakHoldTime = 40; // Approx 1.2s at 30fps
+
     double sampleRate = 44100.0;
     int fftSize = 2048;
     DisplayMode displayMode = DisplayMode::LR;
     bool frozen = false;
+    float displayRangeDb = 90.0f;
 
     static constexpr float minFrequency = 20.0f;
     static constexpr float maxFrequency = 20000.0f;

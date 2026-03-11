@@ -37,12 +37,21 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override {
         juce::MemoryOutputStream stream(destData, true);
         stream.writeBool(analyzeOnly);
+        stream.writeInt(displayMode);
+        stream.writeBool(frozen);
+        stream.writeInt(displayRangeDb);
     }
     
     void setStateInformation (const void* data, int sizeInBytes) override {
         juce::MemoryInputStream stream(data, static_cast<size_t>(sizeInBytes), false);
         if (sizeInBytes > 0)
             analyzeOnly = stream.readBool();
+        if (!stream.isExhausted())
+            displayMode = stream.readInt();
+        if (!stream.isExhausted())
+            frozen = stream.readBool();
+        if (!stream.isExhausted())
+            displayRangeDb = stream.readInt();
     }
 
     FFTProcessor& getFFTProcessorLeft()  { return fftProcessorLeft; }
@@ -56,22 +65,27 @@ public:
     void setAnalyzeOnly (bool shouldBeAnalyzeOnly) { analyzeOnly = shouldBeAnalyzeOnly; }
     bool getAnalyzeOnly() const                    { return analyzeOnly; }
 
-    float getDominantFrequency() {
-        std::vector<float> mags;
-        if (fftProcessorMid.getMagnitudes(mags)) {
-            auto maxIt = std::max_element(mags.begin(), mags.end());
-            int bin = (int)std::distance(mags.begin(), maxIt);
-            return (float)bin * ((float)fftProcessorMid.getSampleRate() / (float)fftProcessorMid.getFFTSize());
-        }
-        return 0.0f;
-    }
+    void setDisplayMode (int newMode) { displayMode = newMode; }
+    int getDisplayMode() const        { return displayMode; }
+
+    void setFrozen (bool shouldBeFrozen) { frozen = shouldBeFrozen; }
+    bool getFrozen() const               { return frozen; }
+
+    void setDisplayRange (int newRange) { displayRangeDb = newRange; }
+    int getDisplayRange() const         { return displayRangeDb; }
+
+    /** Frequency calculated in Editor now to avoid FFT read race conditions. */
 
     static juce::String frequencyToNote(float freq) {
-        if (freq <= 0.0f) return "---";
+        if (freq < 16.0f) return "---"; // Ignore subsonic/DC
         const char* notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-        float midiNote = 12.0f * std::log2(freq / 440.0f) + 69.0457f;
+        
+        // A4 = 440Hz = MIDI 69
+        float midiNote = 12.0f * std::log2(freq / 440.0f) + 69.0f;
         int noteNum = (int)std::round(midiNote);
-        if (noteNum < 0) return "---";
+        
+        if (noteNum < 0 || noteNum > 127) return "---";
+        
         int octave = (noteNum / 12) - 1;
         return juce::String(notes[noteNum % 12]) + juce::String(octave);
     }
@@ -89,6 +103,9 @@ private:
     std::vector<float> tempSideBuffer;
 
     bool analyzeOnly = true;
+    int displayMode = 0;
+    bool frozen = false;
+    int displayRangeDb = 90;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UweVizAudioProcessor)
 };

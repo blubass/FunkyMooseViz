@@ -18,6 +18,11 @@ void SpectrumComponent::setFrozen(bool shouldBeFrozen) {
   repaint();
 }
 
+void SpectrumComponent::setDisplayRange(float newRangeDb) {
+  displayRangeDb = newRangeDb;
+  repaint();
+}
+
 void SpectrumComponent::smoothInto(const std::vector<float> &input,
                                    std::vector<float> &target) {
   if (target.size() != input.size())
@@ -67,7 +72,7 @@ static float frequencyToNormX(float frequency) {
 
 static juce::Path buildSpectrumPath(const std::vector<float> &mags,
                                     juce::Rectangle<float> inner,
-                                    double sampleRate, int fftSize) {
+                                    double sampleRate, int fftSize, float rangeDb) {
   juce::Path p;
 
   if (mags.empty() || fftSize <= 0 || sampleRate <= 0.0)
@@ -99,10 +104,10 @@ static juce::Path buildSpectrumPath(const std::vector<float> &mags,
       }
     }
 
-    float db = (count > 0 ? sum / (float)count : -90.0f);
-    db = juce::jlimit(-90.0f, 0.0f, db);
+    float db = (count > 0 ? sum / (float)count : -rangeDb);
+    db = juce::jlimit(-rangeDb, 0.0f, db);
 
-    const float normY = juce::jmap(db, -90.0f, 0.0f, 0.0f, 1.0f);
+    const float normY = juce::jmap(db, -rangeDb, 0.0f, 0.0f, 1.0f);
     const float x = inner.getX() + normX * inner.getWidth();
     const float y = inner.getBottom() - normY * inner.getHeight();
 
@@ -174,7 +179,7 @@ void SpectrumComponent::paint(juce::Graphics &g) {
               const float freq = std::pow(10.0f, freqLog);
               const int bin = juce::jlimit(0, (int)frame.size()-1, (int)(freq * fftSize / sampleRate));
               
-              float val = juce::jmap(frame[(size_t)bin], -90.0f, 0.0f, 0.0f, 1.0f);
+              float val = juce::jmap(frame[(size_t)bin], -displayRangeDb, 0.0f, 0.0f, 1.0f);
               if (val > 0.05f) {
                   g.setColour(juce::Colour::fromRGB(88, 174, 219).withAlpha(val * 0.15f));
                   g.fillRect(inner.getX() + (float)x, y, (float)step, frameHeight);
@@ -188,8 +193,11 @@ void SpectrumComponent::paint(juce::Graphics &g) {
   // Funky blue Grid
   g.setColour(juce::Colour::fromRGBA(88, 174, 219, 15));
   const float dashH[] = {4.0f, 4.0f};
-  for (float db : {0.f, -12.f, -24.f, -36.f, -48.f, -60.f, -72.f, -84.f}) {
-    const float norm = juce::jmap(db, -90.f, 0.f, 0.f, 1.f);
+  std::vector<float> gridLines = (displayRangeDb < 70.0f) 
+                                 ? std::vector<float>{0.f, -10.f, -20.f, -30.f, -40.f, -50.f, -60.f}
+                                 : std::vector<float>{0.f, -12.f, -24.f, -36.f, -48.f, -60.f, -72.f, -84.f};
+  for (float db : gridLines) {
+    const float norm = juce::jmap(db, -displayRangeDb, 0.f, 0.f, 1.f);
     const float y = inner.getBottom() - norm * inner.getHeight();
 
     g.drawDashedLine(juce::Line<float>(inner.getX(), y, inner.getRight(), y),
@@ -251,50 +259,93 @@ void SpectrumComponent::paint(juce::Graphics &g) {
   };
 
   const auto leftPath =
-      buildSpectrumPath(smoothedLeft, inner, sampleRate, fftSize);
+      buildSpectrumPath(smoothedLeft, inner, sampleRate, fftSize, displayRangeDb);
   const auto rightPath =
-      buildSpectrumPath(smoothedRight, inner, sampleRate, fftSize);
+      buildSpectrumPath(smoothedRight, inner, sampleRate, fftSize, displayRangeDb);
 
   // Matches the Blue/Purple accents from the Amp
-  drawFilledPath(leftPath, juce::Colour::fromRGB(88, 174, 219),
-                 juce::Colour::fromRGBA(88, 174, 219, 40),
-                 juce::Colour::fromRGBA(88, 174, 219, 120));
+  if (displayMode == DisplayMode::LR) {
+    drawFilledPath(leftPath, juce::Colour::fromRGB(88, 174, 219),
+                   juce::Colour::fromRGBA(88, 174, 219, 40),
+                   juce::Colour::fromRGBA(88, 174, 219, 120));
 
-  drawFilledPath(rightPath, juce::Colour::fromRGB(170, 80, 255),
-                 juce::Colour::fromRGBA(170, 80, 255, 30),
-                 juce::Colour::fromRGBA(170, 80, 255, 100));
+    drawFilledPath(rightPath, juce::Colour::fromRGB(170, 80, 255),
+                   juce::Colour::fromRGBA(170, 80, 255, 30),
+                   juce::Colour::fromRGBA(170, 80, 255, 100));
+  } else {
+    // M/S specific warmer colors
+    drawFilledPath(leftPath, juce::Colour::fromRGB(255, 205, 90),
+                   juce::Colour::fromRGBA(255, 205, 90, 40),
+                   juce::Colour::fromRGBA(255, 205, 90, 120));
+
+    drawFilledPath(rightPath, juce::Colour::fromRGB(255, 150, 70),
+                   juce::Colour::fromRGBA(255, 150, 70, 30),
+                   juce::Colour::fromRGBA(255, 150, 70, 100));
+  }
 
   // --- PEAK TRACES ---
   if (!frozen) {
-    updatePeakTrace(peakTraceLeft, smoothedLeft);
-    updatePeakTrace(peakTraceRight, smoothedRight);
+    if (peakTraceLeft.size() != smoothedLeft.size()) {
+        peakTraceLeft = smoothedLeft;
+        peakHoldLeft.assign(smoothedLeft.size(), 0);
+    }
+    if (peakTraceRight.size() != smoothedRight.size()) {
+        peakTraceRight = smoothedRight;
+        peakHoldRight.assign(smoothedRight.size(), 0);
+    }
 
-    // Falloff
-    for (auto &v : peakTraceLeft)
-      v -= 0.15f;
-    for (auto &v : peakTraceRight)
-      v -= 0.15f;
+    for (size_t i = 0; i < (size_t)smoothedLeft.size(); ++i) {
+        if (smoothedLeft[i] > peakTraceLeft[i]) {
+            peakTraceLeft[i] = smoothedLeft[i];
+            peakHoldLeft[i] = peakHoldTime;
+        } else {
+            if (peakHoldLeft[i] > 0) --peakHoldLeft[i];
+            else peakTraceLeft[i] -= 0.35f; 
+        }
+    }
+
+    for (size_t i = 0; i < (size_t)smoothedRight.size(); ++i) {
+        if (smoothedRight[i] > peakTraceRight[i]) {
+            peakTraceRight[i] = smoothedRight[i];
+            peakHoldRight[i] = peakHoldTime;
+        } else {
+            if (peakHoldRight[i] > 0) --peakHoldRight[i];
+            else peakTraceRight[i] -= 0.35f;
+        }
+    }
   }
 
   const auto leftPeakPath =
-      buildSpectrumPath(peakTraceLeft, inner, sampleRate, fftSize);
+      buildSpectrumPath(peakTraceLeft, inner, sampleRate, fftSize, displayRangeDb);
   const auto rightPeakPath =
-      buildSpectrumPath(peakTraceRight, inner, sampleRate, fftSize);
+      buildSpectrumPath(peakTraceRight, inner, sampleRate, fftSize, displayRangeDb);
 
   auto drawPeakLine = [&](const juce::Path &p, juce::Colour c) {
     if (!p.isEmpty()) {
-      g.setColour(c);
-      g.strokePath(p, juce::PathStrokeType(1.2f));
+      g.setColour(c.withAlpha(0.85f));
+      g.strokePath(p, juce::PathStrokeType(0.8f)); // Even thinner line
     }
   };
 
-  drawPeakLine(leftPeakPath, juce::Colour::fromRGBA(132, 238, 255, 200));
-  drawPeakLine(rightPeakPath, juce::Colour::fromRGBA(255, 190, 96, 200));
+  if (displayMode == DisplayMode::LR) {
+      drawPeakLine(leftPeakPath, juce::Colour::fromRGBA(132, 238, 255, 255));
+      drawPeakLine(rightPeakPath, juce::Colour::fromRGBA(255, 190, 96, 255));
+  } else {
+      drawPeakLine(leftPeakPath, juce::Colour::fromRGBA(255, 225, 130, 255));
+      drawPeakLine(rightPeakPath, juce::Colour::fromRGBA(255, 170, 90, 255));
+  }
 
   g.setColour(juce::Colour::fromRGBA(240, 245, 250, 138));
   g.setFont(juce::FontOptions(14.0f).withStyle("Bold"));
   g.drawText("SPECTRUM", getLocalBounds().reduced(16, 10),
              juce::Justification::topLeft, false);
+
+  if (frozen) {
+      g.setColour(juce::Colour::fromRGBA(132, 238, 255, 200));
+      g.setFont(juce::FontOptions(12.0f).withStyle("Bold"));
+      g.drawText("FROZEN", getLocalBounds().reduced(20, 10),
+                 juce::Justification::topRight, false);
+  }
 
   g.setFont(juce::FontOptions(11.0f).withStyle("Bold"));
 
@@ -311,13 +362,13 @@ void SpectrumComponent::paint(juce::Graphics &g) {
                                     (int)inner.getY() + 8, 16, 12),
                juce::Justification::centred, false);
   } else {
-    g.setColour(juce::Colour::fromRGBA(132, 238, 255, 180));
+    g.setColour(juce::Colour::fromRGBA(255, 205, 90, 180));
     g.drawText("M",
                juce::Rectangle<int>((int)inner.getRight() - 52,
                                     (int)inner.getY() + 8, 16, 12),
                juce::Justification::centred, false);
 
-    g.setColour(juce::Colour::fromRGBA(255, 190, 96, 180));
+    g.setColour(juce::Colour::fromRGBA(255, 150, 70, 180));
     g.drawText("S",
                juce::Rectangle<int>((int)inner.getRight() - 28,
                                     (int)inner.getY() + 8, 16, 12),
@@ -335,7 +386,7 @@ void SpectrumComponent::paint(juce::Graphics &g) {
 
     float normY =
         (float)(inner.getBottom() - mousePos.y) / (float)inner.getHeight();
-    float db = -90.0f + normY * 90.0f;
+    float db = -displayRangeDb + normY * displayRangeDb;
 
     // Calculate note (A4 = 440 Hz = MIDI note 69)
     int midiNote = (int)std::round(69.0f + 12.0f * std::log2(freqHz / 440.0f));
@@ -372,8 +423,8 @@ void SpectrumComponent::paint(juce::Graphics &g) {
 }
 
 void SpectrumComponent::resetPeakTrace() {
-  std::fill(peakTraceLeft.begin(), peakTraceLeft.end(), -90.0f);
-  std::fill(peakTraceRight.begin(), peakTraceRight.end(), -90.0f);
+  std::fill(peakTraceLeft.begin(), peakTraceLeft.end(), -displayRangeDb);
+  std::fill(peakTraceRight.begin(), peakTraceRight.end(), -displayRangeDb);
 }
 
 void SpectrumComponent::mouseDoubleClick(const juce::MouseEvent &) {

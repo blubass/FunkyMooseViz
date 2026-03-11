@@ -37,10 +37,15 @@ private:
   juce::Label subTitleLabel;
   juce::Label pitchLabel;
 
+  juce::String currentNoteStr = "---";
+  juce::String targetNoteStr = "---";
+  int noteHoldCount = 0;
+
   juce::TextButton lrButton{"L/R"};
   juce::TextButton msButton{"M/S"};
   juce::TextButton freezeButton{"FREEZE"};
-  juce::ToggleButton analyzeOnlyButton{"ANALYZE ONLY"};
+  juce::TextButton rangeButton{"90 dB"};
+  juce::ToggleButton analyzeOnlyButton{"MONITOR OUT"};
 
   SpectrumComponent::DisplayMode displayMode =
       SpectrumComponent::DisplayMode::LR;
