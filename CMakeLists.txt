@@ -1,16 +1,14 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.15)
 
-# ==============================================================================
-# 1. Project Setup
-# ==============================================================================
-project(FunkyMooseViz VERSION 0.1.3)
+project(FunkyMooseViz VERSION 0.1.4)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ==============================================================================
-# 2. JUCE Framework Integration
-# ==============================================================================
+# =========================================================
+# JUCE Setup
+# =========================================================
+
 # If JUCE is available as a subdirectory (e.g. in CI or a local clone), use it.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
     add_subdirectory(JUCE)
@@ -18,17 +16,19 @@ else()
     find_package(JUCE CONFIG REQUIRED)
 endif()
 
-# ==============================================================================
-# 3. Binary Assets
-# ==============================================================================
+# =========================================================
+# Binary Assets
+# =========================================================
+
 juce_add_binary_data(FunkyMooseVizAssets
     SOURCES
         Source/Assets/image.png
 )
 
-# ==============================================================================
-# 4. Plugin Metadata
-# ==============================================================================
+# =========================================================
+# Plugin Definition
+# =========================================================
+
 juce_add_plugin(FunkyMooseViz
     COMPANY_NAME "Uwe Felchle"
     IS_SYNTH FALSE
@@ -36,22 +36,27 @@ juce_add_plugin(FunkyMooseViz
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD FALSE
+    COPY_PLUGIN_AFTER_BUILD TRUE
+
     PLUGIN_MANUFACTURER_CODE UweF
-    PLUGIN_CODE FmVz
+    PLUGIN_CODE FkVz
     BUNDLE_ID "at.uwefelchle.funkymooseviz"
-    FORMATS VST3 AU Standalone
+
+    FORMATS AU VST3 Standalone
+
     PRODUCT_NAME "Funky Moose Viz"
-    VERSION "0.1.3"  # Explicitly sync version with project level
+    VERSION "0.1.4"
     MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Analyzer-Anzeige."
     ICON_BIG "Source/Assets/FunkyMoose.icns"
 )
 
-# ==============================================================================
-# 5. Source Files
-# ==============================================================================
+# =========================================================
+# Source Files
+# =========================================================
+
 target_sources(FunkyMooseViz PRIVATE
+    # Main Files
     Source/PluginProcessor.h
     Source/PluginProcessor.cpp
     Source/PluginEditor.h
@@ -76,14 +81,19 @@ target_sources(FunkyMooseViz PRIVATE
     Source/Components/ElchComponent.cpp
 )
 
-# ==============================================================================
-# 6. Build Configuration
-# ==============================================================================
+# =========================================================
+# Compile Definitions
+# =========================================================
+
 target_compile_definitions(FunkyMooseViz PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
+
+# =========================================================
+# Linking
+# =========================================================
 
 target_link_libraries(FunkyMooseViz PRIVATE
     FunkyMooseVizAssets
