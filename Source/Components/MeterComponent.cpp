@@ -92,12 +92,36 @@ void MeterComponent::paint(juce::Graphics &g) {
   meterGrad.addColour(0.86, juce::Colour::fromRGB(220, 140, 255));
   meterGrad.addColour(1.00, juce::Colour::fromRGB(255, 200, 255));
 
-  g.setGradientFill(meterGrad);
-  g.fillRoundedRectangle(fill, 7.0f);
+  // Segmented Meter Drawing
+  const int numSegments = 28;
+  const float segGap = 1.0f;
+  const float segHeight = (inner.getHeight() / (float)numSegments);
+
+  for (int i = 0; i < numSegments; ++i) {
+      float segNorm = (float)i / (float)numSegments;
+      if (segNorm > peakNorm) break;
+
+      auto segRect = inner.withTop(inner.getBottom() - (float)(i + 1) * segHeight)
+                         .withHeight(segHeight - segGap)
+                         .reduced(2.0f, 0.0f);
+
+      juce::Colour segCol = meterGrad.getColourAtPosition(segNorm);
+      
+      // Glow based on intensity
+      g.setColour(segCol.withAlpha(0.2f));
+      g.fillRoundedRectangle(segRect.expanded(2.0f), 2.0f);
+      
+      g.setColour(segCol);
+      g.fillRoundedRectangle(segRect, 1.0f);
+      
+      // Shine highlight on segment
+      g.setColour(juce::Colours::white.withAlpha(0.2f));
+      g.fillRoundedRectangle(segRect.withHeight(segRect.getHeight() * 0.4f), 1.0f);
+  }
 
   const float rmsY = inner.getBottom() - rmsNorm * inner.getHeight();
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 120));
-  g.drawHorizontalLine((int)rmsY, inner.getX() + 3.0f, inner.getRight() - 3.0f);
+  g.setColour(juce::Colours::white.withAlpha(0.8f));
+  g.drawHorizontalLine((int)rmsY, inner.getX() + 2.0f, inner.getRight() - 2.0f);
 
   const float holdY = inner.getBottom() - holdNorm * inner.getHeight();
   g.setColour(juce::Colour::fromRGB(255, 245, 205));

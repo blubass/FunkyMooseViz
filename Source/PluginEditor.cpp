@@ -125,46 +125,49 @@ void UweVizAudioProcessorEditor::paint(juce::Graphics &g) {
   g.setColour(juce::Colour::fromRGB(10, 10, 10));
   g.fillAll();
 
-  auto shell = bounds.reduced(8.0f);
-  
-  // Metallic Outer Frame (Beveled)
-  juce::ColourGradient frameGrad(juce::Colour::fromRGB(80, 85, 90), shell.getX(), shell.getY(),
-                                 juce::Colour::fromRGB(40, 42, 45), shell.getX(), shell.getBottom(), false);
-  frameGrad.addColour(0.05f, juce::Colour::fromRGB(110, 115, 120)); // Highlight
-  frameGrad.addColour(0.95f, juce::Colour::fromRGB(20, 22, 25));    // Shadow
-  
-  g.setGradientFill(frameGrad);
-  g.drawRoundedRectangle(shell, 12.0f, 5.0f); // Thicker frame
+  auto area = getLocalBounds().toFloat();
+  auto shell = area.reduced(8.0f);
 
-  // Inner Dark Plate
-  g.setColour(juce::Colour::fromRGB(18, 18, 18));
-  g.fillRoundedRectangle(shell.reduced(2.5f), 10.0f);
+  // Outer Shell Bevel
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 8));
+  g.drawRoundedRectangle(shell, 12.0f, 1.5f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
+  g.drawRoundedRectangle(shell.reduced(1.0f), 12.0f, 1.0f);
 
-  // Inner Glow/Accent
-  g.setColour(juce::Colour::fromRGBA(88, 174, 219, 20));
+  // Subtle Cyan highlight at the top (Rim Light)
+  g.setColour(juce::Colour::fromRGBA(88, 174, 219, 15));
   g.drawRoundedRectangle(shell.reduced(3.0f), 12.0f, 1.2f);
 
+  // Header Panel - Premium Metal Look
   auto innerShell = shell.reduced(12.0f);
   auto headerPanel = innerShell.removeFromTop(88.0f);
   
-  // Header Style from Amp (Beveled)
-  juce::ColourGradient headerGrad(juce::Colour::fromRGB(30, 30, 30), headerPanel.getX(), headerPanel.getY(),
-                                  juce::Colour::fromRGB(12, 12, 12), headerPanel.getX(), headerPanel.getBottom(), false);
+  juce::ColourGradient headerGrad(juce::Colour::fromRGB(35, 38, 42), headerPanel.getX(), headerPanel.getY(),
+                                  juce::Colour::fromRGB(15, 16, 18), headerPanel.getX(), headerPanel.getBottom(), false);
   g.setGradientFill(headerGrad);
   g.fillRoundedRectangle(headerPanel, 6.0f);
   
-  // Bevel line
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 30));
-  g.drawRoundedRectangle(headerPanel, 6.0f, 1.0f);
-  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 100));
-  g.drawRoundedRectangle(headerPanel.reduced(1.0f), 6.0f, 0.8f);
+  // Header Rim & Inner Shadow
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 15));
+  g.drawRoundedRectangle(headerPanel, 6.0f, 0.8f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 180));
+  g.drawRoundedRectangle(headerPanel.reduced(1.0f), 6.0f, 1.0f);
 
   // Draw the new pitch box background next to mode buttons
   auto pb = pitchLabel.getBounds().toFloat();
-  g.setColour(juce::Colour::fromRGBA(10, 15, 20, 180));
+  
+  // Glass effect for pitch box
+  g.setColour(juce::Colour::fromRGBA(20, 25, 30, 180));
   g.fillRoundedRectangle(pb, 4.0f);
-  g.setColour(juce::Colour::fromRGBA(132, 238, 255, 60));
+  
+  juce::ColourGradient pbRim(juce::Colour::fromRGBA(88, 174, 219, 40), pb.getX(), pb.getY(),
+                             juce::Colour::fromRGBA(88, 174, 219, 10), pb.getX(), pb.getBottom(), false);
+  g.setGradientFill(pbRim);
   g.drawRoundedRectangle(pb, 4.0f, 1.0f);
+  
+  // Sub-glow for pitch box
+  g.setColour(juce::Colour::fromRGBA(88, 174, 219, 15));
+  g.fillRoundedRectangle(pb.reduced(2.0f), 4.0f);
 
   g.setColour(juce::Colour::fromRGBA(255, 255, 255, 12));
   g.drawLine(headerPanel.getX() + 18.0f, headerPanel.getBottom() + 10.0f,

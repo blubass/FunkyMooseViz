@@ -244,18 +244,25 @@ void SpectrumComponent::paint(juce::Graphics &g) {
     fill.lineTo(inner.getX(), inner.getBottom());
     fill.closeSubPath();
 
-    juce::ColourGradient grad(fillTop, inner.getCentreX(), inner.getY(),
-                              fillTop.withAlpha(0.05f), inner.getCentreX(),
+    juce::ColourGradient grad(fillTop.withAlpha(0.4f), inner.getCentreX(), inner.getY(),
+                              fillTop.withAlpha(0.0f), inner.getCentreX(),
                               inner.getBottom(), false);
 
     g.setGradientFill(grad);
     g.fillPath(fill);
 
-    g.setColour(glow);
-    g.strokePath(p, juce::PathStrokeType(4.2f));
+    // Dynamic Multi-Layer Glow
+    g.setColour(glow.withAlpha(0.15f));
+    g.strokePath(p, juce::PathStrokeType(6.0f));
+    g.setColour(glow.withAlpha(0.3f));
+    g.strokePath(p, juce::PathStrokeType(3.5f));
 
     g.setColour(line);
-    g.strokePath(p, juce::PathStrokeType(1.8f));
+    g.strokePath(p, juce::PathStrokeType(1.6f));
+    
+    // Bright Core
+    g.setColour(juce::Colours::white.withAlpha(0.3f));
+    g.strokePath(p, juce::PathStrokeType(0.6f));
   };
 
   const auto leftPath =

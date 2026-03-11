@@ -54,12 +54,13 @@ void ElchComponent::paint (juce::Graphics& g)
     {
         g.saveState();
 
-        const float extra = 5.0f + 14.0f * glowAmount;
-        auto auraBounds = bounds.reduced (bounds.getWidth() * 0.22f,
-                                          bounds.getHeight() * 0.18f).expanded (extra);
+        const float extra = 4.0f + 16.0f * glowAmount;
+        auto auraBounds = bounds.reduced (bounds.getWidth() * 0.18f,
+                                          bounds.getHeight() * 0.15f).expanded (extra);
 
+        // Multi-layer Glow for "Boutique" Depth
         juce::ColourGradient auraGrad (
-            modeAura.withAlpha (0.11f * glowAmount),
+            modeAura.withAlpha (0.22f * glowAmount),
             auraBounds.getCentreX(), auraBounds.getCentreY(),
             juce::Colours::transparentBlack,
             auraBounds.getX(), auraBounds.getY(),
@@ -67,6 +68,11 @@ void ElchComponent::paint (juce::Graphics& g)
 
         g.setGradientFill (auraGrad);
         g.fillEllipse (auraBounds);
+        
+        // Inner tight glow
+        g.setColour(modeAura.withAlpha(0.15f * glowAmount));
+        g.fillEllipse(auraBounds.reduced(auraBounds.getWidth() * 0.15f));
+        
         g.restoreState();
     }
 
