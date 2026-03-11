@@ -1,58 +1,109 @@
 # 🦌 Funky Moose Viz
-**Funky Moose Viz is a boutique-style visual analysis plugin for bass, stereo image and musical pitch awareness.**
+**🫎 A musical visualizer for bass players, mix engineers and sound designers — built with character, not just code.**
 
-![Funky Moose Viz UI](screenshot.png)
+Funky Moose Viz is a custom-built JUCE plugin designed to visually support musical decision making. It combines spectrum analysis, waveform display, vectorscope and pitch detection in a cohesive, character-driven interface.
 
-## 🤘 Why it exists
-Most visualizers are either too clinical or too bloated. **Funky Moose Viz** provides a focused, high-performance analysis tool that doesn't just measure audio—it visualizes its character. It's the perfect companion for the **Funky Moose Amp**, bringing the same metallic aesthetic and "funky" energy to your master bus or instrument tracks.
-
-*Ein musikalischer Visualizer für Bass, Mix und Stereo-Bild – nicht klinisch, sondern inspirierend.*
-
-## ✨ Key Features
-- **Pro Spectrum Analyzer**: Stereo & Mid/Side modes with a logarithmic scale (20Hz - 20kHz).
-- **Peak-Hold (Pro)**: Intelligent peak lines that stay at the maximum for a moment before decaying, helping you spot resonances.
-- **Waterfall Spectrogram**: See the frequency history over time for better context.
-- **Vector Scope (Goniometer)**: Precise phase and stereo image visualization.
-- **Waveform Monitor**: Real-time signal monitoring.
-- **High-End Pitch Detection**: Sub-bin accurate frequency detection with musical note translation.
-- **Dynamic Moose API**: Our mascot pulses and glows in sync with your audio levels.
-- **State Persistence**: Remembers your settings (M/S mode, Range, window size, etc.) between sessions.
-
-## 🎧 Typical Use Cases
-- **Check your Low-End**: Use the high-precision spectrum to ensure your Kick and Bass are sitting perfectly in the mix.
-- **Stereo Image Control**: Use the Vector Scope and M/S mode to identify phase issues or excessive side-signal buildup.
-- **Visual Confidence**: Get an immediate feel for the "punch" of your track through the synchronized animations and meters.
-
-## 🛠 Installation
-### For Users
-1. Download the latest version from the **[Releases](https://github.com/blubass/FunkyMooseViz/releases)** page.
-2. Move the `Funky Moose Viz.vst3` or `.component` file to your plugin folder:
-   - **macOS (AU)**: `/Library/Audio/Plug-Ins/Components/`
-   - **macOS (VST3)**: `/Library/Audio/Plug-Ins/VST3/`
-   - **Windows (VST3)**: `C:\Program Files\Common Files\VST3\`
-3. Restart your DAW and rescan plugins.
-
-### For Developers
-1. Clone the repo: `git clone https://github.com/blubass/FunkyMooseViz`
-2. Open with VS Code (using CMake Tools) or CLion.
-3. Build the project. The build system will automatically handle JUCE and assets.
-
-## 📋 Current Formats
-- **VST3** (64-bit)
-- **Audio Unit (AU)**
-- **Standalone Application**
-
-## ⚠️ Known Issues / Limitations
-- **Pitch Detection**: Works best on monophonic signals. Complex polyphonic material might cause jitter.
-- **CPU Usage**: The high-refresh-rate vector scope can be taxing on older systems.
-- **M/S Refinement**: We are still fine-tuning the balance of the Mid/Side visual weights.
-
-## 🗺 Roadmap
-- [ ] **Advanced Pitch Engine**: Transitioning to a hybrid time/frequency domain detector for better bass accuracy.
-- [ ] **Custom Color Themes**: User-definable palettes for the spectrum and UI accents.
-- [ ] **Preset Management**: Save your favorite analysis setups.
-- [ ] **Optimization**: Moving path building to background threads for even smoother UI performance.
+Built to complement the **Funky Moose Amp** — but powerful enough to stand on its own.
 
 ---
-**Built with [JUCE](https://juce.com/).**  
+
+## ✨ Why this exists
+Most visualizers are clinical tools. **Funky Moose Viz is different.**
+
+It is designed for musicians, bass players and mix engineers who want visual feedback that feels musical — not laboratory sterile. The goal is not just to measure sound. The goal is to **understand** it.
+
+---
+
+## 🎛 Features
+- **Real-time Spectrum Analyzer**: Detailed frequency overview.
+- **Waveform Display**: Transient and dynamic monitoring.
+- **Vector Scope**: Stereo / Mid-Side aware phase visualization.
+- **Musical Pitch Detection**: High-accuracy note identification.
+- **Boutique-inspired UI**: Metallic, hardware-driven aesthetic.
+- **Lightweight**: Optimized JUCE-based architecture.
+- **Cross-Platform**: AU / VST3 / Standalone builds.
+
+---
+
+## 🎯 Typical Use Cases
+### 🎸 Bass Monitoring
+Check fundamental clarity, overtone balance and pitch stability.
+
+### 🎚 Stereo Image Control
+Visualize stereo width and phase coherence using the vectorscope.
+
+### 🥁 Mix Bus Insight
+Quick visual feedback for low-end energy distribution and overall spectral balance.
+
+### 🧪 Sound Design
+Track harmonic development and transient behaviour in real time.
+
+---
+
+## 🖥 Supported Formats
+- **AU** (macOS)
+- **VST3** (macOS / Windows)
+- **Standalone Application**
+
+---
+
+## 📦 Installation
+### macOS
+1. Download the latest release.
+2. Copy the `.component` to: `/Library/Audio/Plug-Ins/Components`
+3. Copy the `.vst3` to: `/Library/Audio/Plug-Ins/VST3`
+4. Restart your DAW.
+
+### Windows
+1. Download the Windows release.
+2. Copy the `.vst3` to your VST3 folder (usually): `C:\Program Files\Common Files\VST3`
+3. Rescan plugins in your DAW.
+
+---
+
+## 🛠 Build From Source
+### Requirements
+- CMake
+- JUCE 8
+- Xcode (macOS) or Visual Studio (Windows)
+
+### Example
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+---
+
+## ⚠️ Known Limitations
+- Pitch detection works best on monophonic material.
+- GUI performance may vary on older systems.
+- Further refinement of Mid/Side visualization planned.
+
+---
+
+## 🚀 Roadmap
+- [ ] Improved pitch detection stability.
+- [ ] Waterfall spectrum refinement.
+- [ ] Optimized GUI rendering.
+- [ ] Extended user customization options.
+
+---
+
+## 🧠 Built With
+- **JUCE Framework**
+- **Modern C++**
+- **CMake build system**
+
+---
+
+## 📜 License
+MIT License
+
+---
+
+## 🎵 Philosophy
+> Sound is not only heard. It is seen, felt and understood. Funky Moose Viz exists to make that connection clearer.
+
+---
 *Copyright (c) 2026 blubass*
