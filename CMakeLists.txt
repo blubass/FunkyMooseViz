@@ -5,7 +5,12 @@ project(FunkyMooseViz VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(JUCE CONFIG REQUIRED)
+# If JUCE is available as a subdirectory (e.g. in CI or a local clone), use it.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
+    add_subdirectory(JUCE)
+else()
+    find_package(JUCE CONFIG REQUIRED)
+endif()
 
 juce_add_binary_data(FunkyMooseVizAssets
     SOURCES
