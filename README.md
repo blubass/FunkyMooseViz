@@ -19,6 +19,12 @@ A custom audio visualizer plugin designed to match the aesthetic of the **Funky 
 3. Build the project.
 4. The artifacts will be located in the `build/FunkyMooseViz_artefacts` directory.
 
+## Releases (Mac & Windows)
+
+This project uses **GitHub Actions** to automatically build the plugin for both macOS and Windows.
+- To get the latest binaries, check the [Releases](https://github.com/blubass/FunkyMooseViz/releases) page.
+- New releases are automatically generated whenever a version tag (e.g., `v0.1.0`) is pushed to the repository.
+
 ## License
 
 Copyright (c) 2026 blubass

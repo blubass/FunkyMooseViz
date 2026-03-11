@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: Mac
+          - os: windows-latest
+            platform: Windows
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Mac)
+        if: runner.os == 'macOS'
+        run: |
+          # No extra deps needed for standard JUCE on Mac usually
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Windows deps are usually part of the image
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: ${{ runner.os }}-juce-8.0.10
+
+      - name: Get JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch 8.0.10 https://github.com/juce-framework/JUCE.git
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DJUCE_DIR=JUCE  # Only used if Windows
+          cmake -B build -G "Xcode" -DJUCE_DIR=JUCE # Only used if Mac
+        shell: bash
+        # Note: We need to handle the generator based on OS
+        
+      - name: Override Configure CMake (OS specific)
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            cmake -B build -G "Visual Studio 17 2022" -A x64 -DJUCE_DIR=JUCE
+          else
+            cmake -B build -G "Xcode" -DJUCE_DIR=JUCE
+          fi
+        shell: bash
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package Artifacts (Mac)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p release
+          cp -R "build/FunkyMooseViz_artefacts/Release/AU/Funky Moose Viz.component" release/
+          cp -R "build/FunkyMooseViz_artefacts/Release/VST3/Funky Moose Viz.vst3" release/
+          cp -R "build/FunkyMooseViz_artefacts/Release/Standalone/Funky Moose Viz.app" release/
+          zip -r FunkyMooseViz_Mac.zip release/
+
+      - name: Package Artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir release
+          cp -R "build/FunkyMooseViz_artefacts/Release/VST3/Funky Moose Viz.vst3" release/
+          cp "build/FunkyMooseViz_artefacts/Release/Standalone/Funky Moose Viz.exe" release/
+          7z a FunkyMooseViz_Windows.zip ./release/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            FunkyMooseViz_Mac.zip
+            FunkyMooseViz_Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
