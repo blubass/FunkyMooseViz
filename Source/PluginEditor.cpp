@@ -279,31 +279,56 @@ void UweVizAudioProcessorEditor::timerCallback() {
                       hps[i] = product;
                   }
                   
-                  int minBin = (int)std::ceil(25.0f * (float)normMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
+                  int minBin = (int)std::ceil(20.0f * (float)normMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
                   auto hpsStart = hps.begin() + minBin;
                   if (hpsStart < hps.end()) {
                       auto maxHpsIt = std::max_element(hpsStart, hps.end());
                       int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
                       float peakVal = *maxHpsIt;
                       
+                      // Parabolic Interpolation for sub-bin accuracy (fixes "nervous" jitter)
+                      float peakBinF = (float)peakBin;
+                      if (peakBin > 0 && peakBin < (int)hps.size() - 1) {
+                          float a = hps[peakBin - 1];
+                          float b = hps[peakBin];
+                          float c = hps[peakBin + 1];
+                          float denom = 2.0f * b - a - c;
+                          if (std::abs(denom) > 1e-12f) {
+                              peakBinF += 0.5f * (a - c) / denom;
+                          }
+                      }
+
                       float sumHps = 0.0f;
-                      for (size_t i = minBin; i < hps.size(); ++i) sumHps += hps[i];
+                      for (size_t i = (size_t)minBin; i < hps.size(); ++i) sumHps += hps[i];
                       float avgHps = sumHps / (float)(hps.size() - minBin);
                       
                       confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
                       
-                      if (confidence > 1.2f) { // Very loose threshold for testing
-                          float freq = (float)peakBin * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)normMags.size();
+                      // Increased confidence requirement for actual note display
+                      if (confidence > 3.0f) { 
+                          float freq = peakBinF * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)normMags.size();
                           
                           freqHistory.push_back(freq);
-                          if (freqHistory.size() > 5) freqHistory.pop_front();
+                          if (freqHistory.size() > 10) freqHistory.pop_front(); // Longer history for stability
+                          
+                          // Simple median-ish outlier rejection: sort and take the middle portion
+                          std::vector<float> sortedFreqs(freqHistory.begin(), freqHistory.end());
+                          std::sort(sortedFreqs.begin(), sortedFreqs.end());
                           
                           float sumFreq = 0.0f;
-                          for (float f : freqHistory) sumFreq += f;
-                          smoothedFreq = sumFreq / (float)freqHistory.size();
+                          int count = 0;
+                          // Use the middle 60% of samples to avoid jumping
+                          size_t startIdx = sortedFreqs.size() / 5;
+                          size_t endIdx = sortedFreqs.size() - startIdx;
+                          for (size_t i = startIdx; i < endIdx; ++i) {
+                              sumFreq += sortedFreqs[i];
+                              count++;
+                          }
                           
+                          smoothedFreq = (count > 0) ? (sumFreq / (float)count) : freq;
                           targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
                       } else {
+                          if (!freqHistory.empty()) freqHistory.pop_front(); // Decay history
                           targetNoteStr = "---";
                       }
                   } else {
