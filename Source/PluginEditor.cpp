@@ -144,18 +144,19 @@ void UweVizAudioProcessorEditor::paint(juce::Graphics &g) {
   g.setColour(juce::Colour::fromRGBA(88, 174, 219, 20));
   g.drawRoundedRectangle(shell.reduced(3.0f), 12.0f, 1.2f);
 
-  auto headerPanel = shell.reduced(12.0f).removeFromTop(80.0f);
+  auto innerShell = shell.reduced(12.0f);
+  auto headerPanel = innerShell.removeFromTop(88.0f);
   
   // Header Style from Amp (Beveled)
   juce::ColourGradient headerGrad(juce::Colour::fromRGB(30, 30, 30), headerPanel.getX(), headerPanel.getY(),
-                                  juce::Colour::fromRGB(10, 10, 10), headerPanel.getX(), headerPanel.getBottom(), false);
+                                  juce::Colour::fromRGB(12, 12, 12), headerPanel.getX(), headerPanel.getBottom(), false);
   g.setGradientFill(headerGrad);
   g.fillRoundedRectangle(headerPanel, 6.0f);
   
   // Bevel line
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 35));
-  g.drawRoundedRectangle(headerPanel, 6.0f, 1.2f);
-  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 80));
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 30));
+  g.drawRoundedRectangle(headerPanel, 6.0f, 1.0f);
+  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 100));
   g.drawRoundedRectangle(headerPanel.reduced(1.0f), 6.0f, 0.8f);
 
   // Draw the new pitch box background next to mode buttons
@@ -176,15 +177,15 @@ void UweVizAudioProcessorEditor::resized() {
   auto header = area.removeFromTop(88);
 
   // Logo Left (Square-ish)
-  elchComponent.setBounds(header.removeFromLeft(100).reduced(2));
-  header.removeFromLeft(12);
+  elchComponent.setBounds(header.removeFromLeft(100).reduced(10));
+  header.removeFromLeft(4);
 
-  auto titleArea = header.removeFromLeft(300).reduced(0, 10);
+  auto titleArea = header.removeFromLeft(300).reduced(0, 18);
   titleLabel.setBounds(titleArea.removeFromTop(30));
   subTitleLabel.setBounds(titleArea.removeFromTop(18));
 
   // Right Side: Combined Mode & Pitch Group
-  auto rightGroup = header.removeFromRight(370);
+  auto rightGroup = header.removeFromRight(370).reduced(0, 15);
   
   auto pitchArea = rightGroup.removeFromLeft(80).reduced(0, 20);
   pitchLabel.setBounds(pitchArea);
