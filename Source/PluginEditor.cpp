@@ -255,84 +255,73 @@ void UweVizAudioProcessorEditor::timerCallback() {
       waveformComponent.setWaveform(waveformL, waveformR);
 
       // Pitch detection logic (HPS - Harmonic Product Spectrum)
-      std::vector<float> linearMags;
-      if (audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(linearMags)) {
-          if (linearMags.size() > 10) {
-              int hpsOrder = 4;
-              std::vector<float> hps(linearMags.size() / hpsOrder, 1.0f);
+      std::vector<float> spectrum;
+      if (audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(spectrum)) {
+          if (spectrum.size() > 512) {
+              const int hpsOrder = 4;
+              const int hpsSize = (int)spectrum.size() / hpsOrder;
+              std::vector<float> hps(hpsSize);
               
-              float maxLin = 0.0f;
-              for (auto m : linearMags) if (m > maxLin) maxLin = m;
+              float maxMag = 0.0f;
+              for (auto m : spectrum) if (m > maxMag) maxMag = m;
               
-              // Very sensitive: 0.000001f for extremely quiet signals
-              if (maxLin > 1.0e-6f) {
-                  // Normalize for HPS to prevent numerical underflow
-                  std::vector<float> normMags = linearMags;
-                  float invMax = 1.0f / maxLin;
-                  for (auto& m : normMags) m *= invMax;
+              // Only process if signal is above noise floor
+              if (maxMag > 1.0e-5f) {
+                  // Initialize HPS with the first spectrum slice
+                  for (int i = 0; i < hpsSize; ++i) 
+                      hps[i] = spectrum[i] / maxMag; 
 
-                  for (size_t i = 1; i < hps.size(); ++i) {
-                      float product = normMags[i];
-                      for (int j = 2; j <= hpsOrder; ++j) {
-                          product *= normMags[i * j];
+                  // Harmoic Product: multiply by harmonics 2, 3, 4
+                  for (int h = 2; h <= hpsOrder; ++h) {
+                      for (int i = 0; i < hpsSize; ++i) {
+                          hps[i] *= (spectrum[i * h] / maxMag);
                       }
-                      hps[i] = product;
                   }
                   
-                  int minBin = (int)std::ceil(20.0f * (float)normMags.size() / ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f));
-                  auto hpsStart = hps.begin() + minBin;
-                  if (hpsStart < hps.end()) {
+                  // Ignore DC and subsonic below 20Hz
+                  const float sampleRate = (float)audioProcessor.getFFTProcessorLeft().getSampleRate();
+                  const float binFreq = (sampleRate / 2.0f) / (float)spectrum.size();
+                  int minBin = (int)std::ceil(20.0f / binFreq);
+                  
+                  if (minBin < hpsSize) {
+                      auto hpsStart = hps.begin() + minBin;
                       auto maxHpsIt = std::max_element(hpsStart, hps.end());
                       int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
                       float peakVal = *maxHpsIt;
                       
-                      // Parabolic Interpolation for sub-bin accuracy (fixes "nervous" jitter)
+                      // Parabolic Interpolation for jitter reduction
                       float peakBinF = (float)peakBin;
-                      if (peakBin > 0 && peakBin < (int)hps.size() - 1) {
-                          float a = hps[peakBin - 1];
-                          float b = hps[peakBin];
-                          float c = hps[peakBin + 1];
-                          float denom = 2.0f * b - a - c;
-                          if (std::abs(denom) > 1e-12f) {
-                              peakBinF += 0.5f * (a - c) / denom;
-                          }
+                      if (peakBin > 0 && peakBin < hpsSize - 1) {
+                          float y1 = hps[peakBin - 1];
+                          float y2 = hps[peakBin];
+                          float y3 = hps[peakBin + 1];
+                          float denom = 2.0f * y2 - y1 - y3;
+                          if (std::abs(denom) > 1e-12f) peakBinF += 0.5f * (y1 - y3) / denom;
                       }
 
+                      // Confidence calculation
                       float sumHps = 0.0f;
-                      for (size_t i = (size_t)minBin; i < hps.size(); ++i) sumHps += hps[i];
-                      float avgHps = sumHps / (float)(hps.size() - minBin);
-                      
+                      for (int i = minBin; i < hpsSize; ++i) sumHps += hps[i];
+                      float avgHps = sumHps / (float)(hpsSize - minBin);
                       confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
                       
-                      // Increased confidence requirement for actual note display
-                      if (confidence > 3.0f) { 
-                          float freq = peakBinF * ((float)audioProcessor.getFFTProcessorLeft().getSampleRate() / 2.0f) / (float)normMags.size();
+                      // Filter and display
+                      if (confidence > 4.0f) { // Higher threshold for stability
+                          float freq = peakBinF * binFreq;
                           
                           freqHistory.push_back(freq);
-                          if (freqHistory.size() > 10) freqHistory.pop_front(); // Longer history for stability
+                          if (freqHistory.size() > 8) freqHistory.pop_front();
                           
-                          // Simple median-ish outlier rejection: sort and take the middle portion
+                          // Outlier rejection (median filter approach)
                           std::vector<float> sortedFreqs(freqHistory.begin(), freqHistory.end());
                           std::sort(sortedFreqs.begin(), sortedFreqs.end());
+                          smoothedFreq = sortedFreqs[sortedFreqs.size() / 2];
                           
-                          float sumFreq = 0.0f;
-                          int count = 0;
-                          // Use the middle 60% of samples to avoid jumping
-                          size_t startIdx = sortedFreqs.size() / 5;
-                          size_t endIdx = sortedFreqs.size() - startIdx;
-                          for (size_t i = startIdx; i < endIdx; ++i) {
-                              sumFreq += sortedFreqs[i];
-                              count++;
-                          }
-                          
-                          smoothedFreq = (count > 0) ? (sumFreq / (float)count) : freq;
                           targetNoteStr = UweVizAudioProcessor::frequencyToNote(smoothedFreq);
                       } else {
-                          if (!freqHistory.empty()) freqHistory.pop_front(); // Decay history
+                          if (!freqHistory.empty()) freqHistory.pop_front();
                           targetNoteStr = "---";
                       }
-                  } else {
-                      targetNoteStr = "---";
                   }
               } else {
                   freqHistory.clear();

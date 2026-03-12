@@ -20,7 +20,7 @@ public:
     int getFFTSize() const noexcept       { return fftSize; }
 
 private:
-    static constexpr int fftOrder = 11;
+    static constexpr int fftOrder = 12; // Increased for better bass resolution (4096 bins)
     static constexpr int fftSize  = 1 << fftOrder;
 
     juce::dsp::FFT fft;
