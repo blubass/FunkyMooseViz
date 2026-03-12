@@ -70,11 +70,13 @@ void UweVizAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     const float* left  = (numChannels > 0) ? buffer.getReadPointer (0) : nullptr;
     const float* right = (numChannels > 1) ? buffer.getReadPointer (1) : left;
 
+    bool anyNewFFT = false;
+
     if (left != nullptr)
-        fftProcessorLeft.pushSamples (left, numSamples);
+        if (fftProcessorLeft.pushSamples (left, numSamples)) anyNewFFT = true;
 
     if (right != nullptr)
-        fftProcessorRight.pushSamples (right, numSamples);
+        if (fftProcessorRight.pushSamples (right, numSamples)) anyNewFFT = true;
 
     if (left != nullptr && right != nullptr)
     {
@@ -86,9 +88,12 @@ void UweVizAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             tempSideBuffer[(size_t) i] = 0.5f * (l - r);
         }
 
-        fftProcessorMid.pushSamples  (tempMidBuffer.data(), numSamples);
-        fftProcessorSide.pushSamples (tempSideBuffer.data(), numSamples);
+        if (fftProcessorMid.pushSamples  (tempMidBuffer.data(), numSamples)) anyNewFFT = true;
+        if (fftProcessorSide.pushSamples (tempSideBuffer.data(), numSamples)) anyNewFFT = true;
     }
+
+    if (anyNewFFT)
+        analysisFrameCounter.fetch_add (1, std::memory_order_release);
 
     if (left != nullptr)
         waveformBuffer.pushStereoSamples (left, right, numSamples);

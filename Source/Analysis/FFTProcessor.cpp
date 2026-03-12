@@ -10,15 +10,24 @@ void FFTProcessor::prepare (double sampleRate, int)
 {
     currentSampleRate = sampleRate;
     fifoIndex = 0;
-    fftReady = false;
+
     std::fill (fifo.begin(), fifo.end(), 0.0f);
-    std::fill (fftData.begin(), fftData.end(), 0.0f);
+    std::fill (workingFFTData.begin(), workingFFTData.end(), 0.0f);
+
+    for (auto& frame : linearFrames)
+        std::fill (frame.begin(), frame.end(), 0.0f);
+
+    publishedBufferIndex.store (0, std::memory_order_release);
+    publishedFrameCounter.store (0, std::memory_order_release);
+    consumedFrameCounter.store (0, std::memory_order_release);
 }
 
-void FFTProcessor::pushSamples (const float* samples, int numSamples)
+bool FFTProcessor::pushSamples (const float* samples, int numSamples)
 {
     if (samples == nullptr)
-        return;
+        return false;
+
+    bool framePublished = false;
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -26,45 +35,66 @@ void FFTProcessor::pushSamples (const float* samples, int numSamples)
 
         if (fifoIndex == fftSize)
         {
-            std::fill (fftData.begin(), fftData.end(), 0.0f);
-            std::copy (fifo.begin(), fifo.end(), fftData.begin());
-            window.multiplyWithWindowingTable (fftData.data(), fftSize);
-            fft.performFrequencyOnlyForwardTransform (fftData.data());
-            fftReady = true;
+            std::fill (workingFFTData.begin(), workingFFTData.end(), 0.0f);
+            std::copy (fifo.begin(), fifo.end(), workingFFTData.begin());
+
+            window.multiplyWithWindowingTable (workingFFTData.data(), fftSize);
+            fft.performFrequencyOnlyForwardTransform (workingFFTData.data());
+
+            // Get the current published index and write to the OTHER buffer
+            const int currentFront = publishedBufferIndex.load(std::memory_order_acquire);
+            const int backIndex = 1 - currentFront;
+            auto& backFrame = linearFrames[(size_t) backIndex];
+
+            // Normalize and copy results to the back buffer
+            for (int bin = 0; bin < numBins; ++bin)
+                backFrame[(size_t) bin] = workingFFTData[(size_t) bin] / (float) fftSize;
+
+            // Atomic swap: publish the back buffer
+            publishedBufferIndex.store (backIndex, std::memory_order_release);
+            publishedFrameCounter.fetch_add (1, std::memory_order_acq_rel);
+
             fifoIndex = 0;
+            framePublished = true;
         }
     }
+
+    return framePublished;
+}
+
+bool FFTProcessor::getLinearMagnitudes (std::vector<float>& result)
+{
+    const auto published = publishedFrameCounter.load(std::memory_order_acquire);
+    const auto consumed  = consumedFrameCounter.load(std::memory_order_acquire);
+
+    // If no new data since last clearNewDataFlag()
+    if (published == consumed)
+        return false;
+
+    const int frontIndex = publishedBufferIndex.load(std::memory_order_acquire);
+    const auto& frame = linearFrames[(size_t) frontIndex];
+
+    result.assign (frame.begin(), frame.end());
+    return true;
 }
 
 bool FFTProcessor::getMagnitudes (std::vector<float>& result)
 {
-    if (! fftReady)
+    const auto published = publishedFrameCounter.load(std::memory_order_acquire);
+    const auto consumed  = consumedFrameCounter.load(std::memory_order_acquire);
+
+    if (published == consumed)
         return false;
 
-    result.resize (fftSize / 2);
+    const int frontIndex = publishedBufferIndex.load(std::memory_order_acquire);
+    const auto& frame = linearFrames[(size_t) frontIndex];
 
-    for (size_t i = 0; i < result.size(); ++i)
+    result.resize (frame.size());
+    for (size_t i = 0; i < frame.size(); ++i)
     {
-        const float mag = fftData[i] / (float) fftSize;
-        result[i] = juce::Decibels::gainToDecibels (juce::jmax (mag, 1.0e-9f), -120.0f);
+        // Convert to dB using the data from the front buffer
+        result[i] = juce::Decibels::gainToDecibels (juce::jmax (frame[i], 1.0e-9f), -120.0f);
     }
 
-    // Flag is now cleared manually by the consumer (Editor) 
-    // to allow multiple analysis modules to use the same frame.
     return true;
-}
-bool FFTProcessor::getLinearMagnitudes (std::vector<float>& result)
-{
-    if (! fftReady)
-        return false;
-
-    result.resize (fftSize / 2);
-
-    for (size_t i = 0; i < result.size(); ++i)
-    {
-        result[i] = fftData[i] / (float) fftSize;
-    }
-
-    return true; // We don't reset fftReady here yet, so both calls can succeed in some cases, 
-                 // but typically we'll call one or the other.
 }

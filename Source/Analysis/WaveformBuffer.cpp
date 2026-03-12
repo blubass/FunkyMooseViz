@@ -1,11 +1,12 @@
 #include "WaveformBuffer.h"
+#include <algorithm>
 
 void WaveformBuffer::prepare (int size)
 {
     bufferL.assign ((size_t) size, 0.0f);
     bufferR.assign ((size_t) size, 0.0f);
-    writeIndex = 0;
-    hasWrapped = false;
+    writeIndex.store (0, std::memory_order_release);
+    hasWrapped.store (false, std::memory_order_release);
 }
 
 void WaveformBuffer::pushStereoSamples (const float* left, const float* right, int numSamples)
@@ -13,42 +14,54 @@ void WaveformBuffer::pushStereoSamples (const float* left, const float* right, i
     if (bufferL.empty() || left == nullptr)
         return;
 
+    const int size = (int) bufferL.size();
+    int localWriteIndex = writeIndex.load (std::memory_order_relaxed);
+
     for (int i = 0; i < numSamples; ++i)
     {
-        bufferL[(size_t) writeIndex] = left[i];
-        bufferR[(size_t) writeIndex] = (right != nullptr) ? right[i] : left[i];
-        ++writeIndex;
-
-        if (writeIndex >= (int) bufferL.size())
+        bufferL[(size_t) localWriteIndex] = left[i];
+        bufferR[(size_t) localWriteIndex] = (right != nullptr) ? right[i] : left[i];
+        
+        if (++localWriteIndex >= size)
         {
-            writeIndex = 0;
-            hasWrapped = true;
+            localWriteIndex = 0;
+            hasWrapped.store (true, std::memory_order_release);
         }
     }
+    
+    writeIndex.store (localWriteIndex, std::memory_order_release);
 }
 
 void WaveformBuffer::getStereoWaveform (std::vector<float>& leftOut, std::vector<float>& rightOut) const
 {
-    leftOut.clear();
-    rightOut.clear();
-
     if (bufferL.empty())
         return;
 
+    const int currentIdx = writeIndex.load (std::memory_order_acquire);
+    const bool wrapped = hasWrapped.load (std::memory_order_acquire);
     const size_t size = bufferL.size();
-    leftOut.reserve (size);
-    rightOut.reserve (size);
 
-    if (! hasWrapped)
+    leftOut.assign (size, 0.0f);
+    rightOut.assign (size, 0.0f);
+
+    if (! wrapped)
     {
-        leftOut.insert (leftOut.end(), bufferL.begin(), bufferL.begin() + writeIndex);
-        rightOut.insert (rightOut.end(), bufferR.begin(), bufferR.begin() + writeIndex);
-        return;
+        // Copy only up to what we have
+        std::copy (bufferL.begin(), bufferL.begin() + currentIdx, leftOut.begin());
+        std::copy (bufferR.begin(), bufferR.begin() + currentIdx, rightOut.begin());
     }
+    else
+    {
+        // Linearity: Part 1 is from currentIdx to end, Part 2 is from 0 to currentIdx
+        const size_t part2Size = (size_t) currentIdx;
+        const size_t part1Size = size - part2Size;
 
-    leftOut.insert (leftOut.end(), bufferL.begin() + writeIndex, bufferL.end());
-    leftOut.insert (leftOut.end(), bufferL.begin(), bufferL.begin() + writeIndex);
-    
-    rightOut.insert (rightOut.end(), bufferR.begin() + writeIndex, bufferR.end());
-    rightOut.insert (rightOut.end(), bufferR.begin(), bufferR.begin() + writeIndex);
+        // Copy Part 1 (Older data)
+        std::copy (bufferL.begin() + currentIdx, bufferL.end(), leftOut.begin());
+        std::copy (bufferR.begin() + currentIdx, bufferR.end(), rightOut.begin());
+
+        // Copy Part 2 (Newer data)
+        std::copy (bufferL.begin(), bufferL.begin() + currentIdx, leftOut.begin() + (std::ptrdiff_t)part1Size);
+        std::copy (bufferR.begin(), bufferR.begin() + currentIdx, rightOut.begin() + (std::ptrdiff_t)part1Size);
+    }
 }

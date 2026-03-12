@@ -242,8 +242,12 @@ void UweVizAudioProcessorEditor::timerCallback() {
       audioProcessor.getFFTProcessorLeft().getSampleRate(),
       audioProcessor.getFFTProcessorLeft().getFFTSize());
 
-  // Check if new data is available on the left channel (primary for pitch)
-  if (!frozen && audioProcessor.getFFTProcessorLeft().isNewDataAvailable()) {
+  const uint32_t currentFrame = audioProcessor.analysisFrameCounter.load(std::memory_order_acquire);
+
+  // Update all analysis components when a new master frame is ready
+  if (!frozen && currentFrame != lastConsumedFrame) {
+      lastConsumedFrame = currentFrame;
+      
       std::vector<float> magsA, magsB;
       
       if (displayMode == SpectrumComponent::DisplayMode::LR) {
@@ -267,7 +271,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
       if (audioProcessor.getFFTProcessorLeft().getLinearMagnitudes(spectrum)) {
           if (spectrum.size() > 512) {
               const int hpsOrder = 4;
-              const int hpsSize = (int)spectrum.size() / hpsOrder;
+              const size_t hpsSize = (size_t)spectrum.size() / hpsOrder;
               std::vector<float> hps(hpsSize);
               
               float maxMag = 0.0f;
@@ -276,25 +280,25 @@ void UweVizAudioProcessorEditor::timerCallback() {
               // Only process if signal is above noise floor
               if (maxMag > 1.0e-5f) {
                   // Initialize HPS with the first spectrum slice
-                  for (int i = 0; i < hpsSize; ++i) 
+                  for (size_t i = 0; i < hpsSize; ++i) 
                       hps[i] = spectrum[i] / maxMag; 
 
                   // Harmoic Product: multiply by harmonics 2, 3, 4
                   for (int h = 2; h <= hpsOrder; ++h) {
-                      for (int i = 0; i < hpsSize; ++i) {
-                          hps[i] *= (spectrum[i * h] / maxMag);
+                      for (size_t i = 0; i < hpsSize; ++i) {
+                          hps[i] *= (spectrum[i * (size_t)h] / maxMag);
                       }
                   }
                   
                   // Ignore DC and subsonic below 20Hz
                   const float sampleRate = (float)audioProcessor.getFFTProcessorLeft().getSampleRate();
                   const float binFreq = (sampleRate / 2.0f) / (float)spectrum.size();
-                  int minBin = (int)std::ceil(20.0f / binFreq);
+                  const size_t minBin = (size_t)std::ceil(20.0f / binFreq);
                   
                   if (minBin < hpsSize) {
-                      auto hpsStart = hps.begin() + minBin;
+                      auto hpsStart = hps.begin() + (std::ptrdiff_t)minBin;
                       auto maxHpsIt = std::max_element(hpsStart, hps.end());
-                      int peakBin = (int)std::distance(hps.begin(), maxHpsIt);
+                      const size_t peakBin = (size_t)std::distance(hps.begin(), maxHpsIt);
                       float peakVal = *maxHpsIt;
                       
                       // Parabolic Interpolation for jitter reduction
@@ -309,7 +313,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
 
                       // Confidence calculation
                       float sumHps = 0.0f;
-                      for (int i = minBin; i < hpsSize; ++i) sumHps += hps[i];
+                      for (size_t i = minBin; i < hpsSize; ++i) sumHps += hps[i];
                       float avgHps = sumHps / (float)(hpsSize - minBin);
                       confidence = (avgHps > 0) ? (peakVal / avgHps) : 0.0f;
                       
@@ -338,12 +342,6 @@ void UweVizAudioProcessorEditor::timerCallback() {
           }
           currentNoteStr = targetNoteStr;
       }
-
-      // Manual Clear Flag after ALL analysis consumes the data
-      audioProcessor.getFFTProcessorLeft().clearNewDataFlag();
-      audioProcessor.getFFTProcessorRight().clearNewDataFlag();
-      audioProcessor.getFFTProcessorMid().clearNewDataFlag();
-      audioProcessor.getFFTProcessorSide().clearNewDataFlag();
   }
 
   pitchLabel.setText(currentNoteStr, juce::dontSendNotification);

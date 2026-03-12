@@ -68,6 +68,8 @@ public:
     int lastUIWidth = 960;
     int lastUIHeight = 620;
 
+    std::atomic<uint32_t> analysisFrameCounter { 0 };
+
     WaveformBuffer& getWaveformBuffer()  { return waveformBuffer; }
     LevelMeterSource& getMeterSource()   { return meterSource; }
 

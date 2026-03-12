@@ -55,6 +55,7 @@ private:
   SpectrumComponent::DisplayMode displayMode =
       SpectrumComponent::DisplayMode::LR;
   bool frozen = false;
+  uint32_t lastConsumedFrame = 0;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UweVizAudioProcessorEditor)
 };
