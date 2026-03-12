@@ -47,6 +47,7 @@ private:
 
   juce::TextButton lrButton{"L/R"};
   juce::TextButton msButton{"M/S"};
+  juce::TextButton waterfallButton{"WATERFALL"};
   juce::TextButton freezeButton{"FREEZE"};
   juce::TextButton rangeButton{"90 dB"};
   juce::ToggleButton analyzeOnlyButton{"MONITOR OUT"};

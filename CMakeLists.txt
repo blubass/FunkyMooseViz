@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.21)
 
-project(FunkyMooseViz VERSION 0.1.4)
+project(FunkyMooseViz VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -53,7 +53,7 @@ juce_add_plugin(FunkyMooseViz
 # Source Files
 # ==============================
 
-target_sources(FunkyMooseViz PRIVATE
+set(FunkyMooseViz_SOURCES
     # Core
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
@@ -78,6 +78,11 @@ target_sources(FunkyMooseViz PRIVATE
     Source/Components/ElchComponent.cpp
     Source/Components/ElchComponent.h
 )
+
+target_sources(FunkyMooseViz PRIVATE ${FunkyMooseViz_SOURCES})
+
+# Organisiert die Dateien in der IDE (Xcode/VS) in der echten Ordnerstruktur
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Source" PREFIX "Source" FILES ${FunkyMooseViz_SOURCES})
 
 # ==============================
 # Compiler Definitions

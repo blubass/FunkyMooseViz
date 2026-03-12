@@ -147,6 +147,8 @@ void MeterComponent::paint(juce::Graphics &g) {
 
 void CorrelationMeterComponent::setCorrelation(float newCorrelation) {
   correlation = newCorrelation;
+  const float smoothing = 0.85f;
+  displayCorrelation = smoothing * displayCorrelation + (1.0f - smoothing) * correlation;
   repaint();
 }
 
@@ -163,76 +165,73 @@ void CorrelationMeterComponent::paint(juce::Graphics &g) {
   auto panelBounds = frameBounds.reduced(3.0f);
   g.setColour(juce::Colour::fromRGB(15, 15, 15));
   g.fillRoundedRectangle(panelBounds, 2.0f);
-  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 180));
-  g.drawRoundedRectangle(panelBounds.reduced(1.0f), 2.0f, 1.5f);
-
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 25));
-  g.drawRoundedRectangle(frameBounds.reduced(1.0f).withTrimmedBottom(2.0f), 4.0f, 1.0f);
-  g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
-  g.drawRoundedRectangle(frameBounds.reduced(0.5f).withTrimmedTop(2.0f), 4.0f, 1.0f);
-
-  auto drawScrew = [&](float cx, float cy) {
-      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
-      g.fillEllipse(cx - 3.5f, cy - 3.5f, 7.0f, 7.0f);
-      g.setColour(juce::Colour::fromRGB(16, 16, 18));
-      g.fillEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f);
-      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 40));
-      g.drawEllipse(cx - 3.0f, cy - 3.0f, 6.0f, 6.0f, 1.0f);
-      g.setColour(juce::Colour::fromRGBA(255, 255, 255, 50));
-      g.drawLine(cx - 1.5f, cy - 1.5f, cx + 1.5f, cy + 1.5f, 1.5f);
-      g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
-      g.drawLine(cx - 1.0f, cy - 1.5f, cx + 2.0f, cy + 1.5f, 1.0f);
-  };
-  float offset = 7.0f;
-  drawScrew(area.getX() + offset, area.getY() + offset);
-  drawScrew(area.getRight() - offset, area.getY() + offset);
-  drawScrew(area.getX() + offset, area.getBottom() - offset);
-  drawScrew(area.getRight() - offset, area.getBottom() - offset);
-
-  auto inner = area.reduced(9.0f);
-  auto labelArea = inner.removeFromBottom(20.0f);
+  
+  auto inner = panelBounds.reduced(6.0f);
+  auto labelArea = inner.removeFromBottom(18.0f);
   inner.removeFromBottom(2.0f);
 
-  juce::ColourGradient slotGrad(juce::Colour::fromRGBA(255, 255, 255, 12),
-                                inner.getX(), inner.getY(),
-                                juce::Colour::fromRGBA(0, 0, 0, 50),
-                                inner.getX(), inner.getBottom(), false);
-  g.setGradientFill(slotGrad);
-  g.fillRoundedRectangle(inner, 8.0f);
-
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 18));
-  g.drawRoundedRectangle(inner, 8.0f, 1.0f);
+  // Meter Background Slot
+  g.setColour(juce::Colour::fromRGB(5, 5, 5));
+  g.fillRoundedRectangle(inner, 2.0f);
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
+  g.drawRoundedRectangle(inner, 2.0f, 1.0f);
 
   float midY = inner.getY() + inner.getHeight() * 0.5f;
-  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 60));
-  g.drawHorizontalLine((int)midY, inner.getX() + 4.0f, inner.getRight() - 4.0f);
+  
+  // Center mark
+  g.setColour(juce::Colour::fromRGBA(255, 255, 255, 40));
+  g.drawHorizontalLine((int)midY, inner.getX(), inner.getRight());
 
-  float val = juce::jlimit(-1.0f, 1.0f, correlation);
+  float val = juce::jlimit(-1.0f, 1.0f, displayCorrelation);
   float yPos = inner.getY() + inner.getHeight() * 0.5f * (1.0f - val);
 
   juce::Rectangle<float> fill;
   if (val >= 0.0f) {
-    fill = juce::Rectangle<float>(inner.getX(), yPos, inner.getWidth(),
-                                  midY - yPos);
-    g.setColour(juce::Colour(0xFF00BFFF).withAlpha(0.8f)); // soft cyan mix
+    fill = juce::Rectangle<float>(inner.getX(), yPos, inner.getWidth(), midY - yPos);
+    
+    juce::Colour cyan = juce::Colour::fromRGB(88, 174, 219);
+    juce::ColourGradient fillGrad(cyan.withAlpha(0.2f), inner.getX(), midY,
+                                  cyan, inner.getX(), yPos, false);
+    g.setGradientFill(fillGrad);
+    g.fillRoundedRectangle(fill.reduced(2.0f, 0), 1.0f);
+    
+    // Glow
+    g.setColour(cyan.withAlpha(0.3f));
+    g.fillRoundedRectangle(fill.expanded(1.0f, 0.0f), 2.0f);
   } else {
-    fill = juce::Rectangle<float>(inner.getX(), midY, inner.getWidth(),
-                                  yPos - midY);
-    g.setColour(juce::Colours::orange.withAlpha(0.8f));
+    fill = juce::Rectangle<float>(inner.getX(), midY, inner.getWidth(), yPos - midY);
+    
+    juce::Colour orange = juce::Colours::orange;
+    juce::ColourGradient fillGrad(orange.withAlpha(0.2f), inner.getX(), midY,
+                                  orange, inner.getX(), yPos, false);
+    g.setGradientFill(fillGrad);
+    g.fillRoundedRectangle(fill.reduced(2.0f, 0), 1.0f);
+    
+    // Glow
+    g.setColour(orange.withAlpha(0.3f));
+    g.fillRoundedRectangle(fill.expanded(1.0f, 0.0f), 2.0f);
   }
-  g.fillRoundedRectangle(fill, 2.0f);
 
-  g.setColour(juce::Colours::white);
-  g.drawHorizontalLine((int)yPos, inner.getX() + 2.0f, inner.getRight() - 2.0f);
+  // Value Line
+  g.setColour(juce::Colours::white.withAlpha(0.9f));
+  g.drawHorizontalLine((int)yPos, inner.getX() + 1.0f, inner.getRight() - 1.0f);
+
+  // Markings (+1, 0, -1)
+  g.setFont(juce::FontOptions(9.0f));
+  g.setColour(juce::Colour::fromRGBA(200, 200, 200, 120));
+  g.drawText("+1", inner.withHeight(10).withY(inner.getY()), juce::Justification::centredRight, false);
+  g.drawText("0", inner.withHeight(10).withY(midY - 5), juce::Justification::centredRight, false);
+  g.drawText("-1", inner.withHeight(10).withY(inner.getBottom() - 10), juce::Justification::centredRight, false);
 
   g.setColour(juce::Colour::fromRGBA(230, 235, 240, 170));
-  g.setFont(juce::FontOptions(12.0f));
-  g.drawText("PHASE", labelArea.toNearestInt(), juce::Justification::centred,
-             false);
+  g.setFont(juce::FontOptions(11.0f).withStyle("Bold"));
+  g.drawText("CORR", labelArea.toNearestInt(), juce::Justification::centred, false);
 }
 
 void LoudnessMeterComponent::setLoudness(float newLoudness) {
   loudness = newLoudness;
+  const float smoothing = 0.9f;
+  displayLoudness = smoothing * displayLoudness + (1.0f - smoothing) * loudness;
   repaint();
 }
 
@@ -253,7 +252,7 @@ void LoudnessMeterComponent::paint(juce::Graphics &g) {
   g.setColour(juce::Colour::fromRGBA(0, 0, 0, 40));
   g.fillRoundedRectangle(inner, 8.0f);
 
-  float norm = juce::jlimit(0.0f, 1.0f, juce::jmap(juce::Decibels::gainToDecibels(loudness, -60.0f), -60.0f, 0.0f, 0.0f, 1.0f));
+  float norm = displayLoudness;
   auto fill = inner;
   fill.removeFromTop(inner.getHeight() * (1.0f - norm));
 
@@ -263,7 +262,18 @@ void LoudnessMeterComponent::paint(juce::Graphics &g) {
   g.setGradientFill(grad);
   g.fillRoundedRectangle(fill, 4.0f);
 
-  g.setColour(juce::Colour::fromRGB(220, 220, 220));
-  g.setFont(juce::FontOptions(11.0f).withStyle("Bold"));
-  g.drawText("LOUD", labelArea.toNearestInt(), juce::Justification::centred, false);
+  // --- Numeric LUFS Display ---
+  // Convert the smoothed normalized value back to dB for display
+  float db = juce::jmap(displayLoudness, 0.0f, 1.0f, -60.0f, 0.0f);
+  juce::String loudnessText;
+  if (db <= -59.9f) loudnessText = "-inf"; // Use a small epsilon for -inf check
+  else loudnessText = juce::String(db, 1);
+
+  g.setColour(juce::Colours::white);
+  g.setFont(juce::FontOptions(10.0f).withStyle("Bold"));
+  g.drawText(loudnessText, labelArea.withTrimmedTop(10), juce::Justification::centred, false);
+
+  g.setColour(juce::Colour::fromRGB(180, 210, 230));
+  g.setFont(juce::FontOptions(10.0f).withStyle("Bold"));
+  g.drawText("LUFS", labelArea.withTrimmedBottom(10), juce::Justification::centred, false);
 }

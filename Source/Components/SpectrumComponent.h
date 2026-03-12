@@ -10,7 +10,8 @@ public:
     enum class DisplayMode
     {
         LR,
-        MS
+        MS,
+        Waterfall
     };
 
     SpectrumComponent();
@@ -21,6 +22,7 @@ public:
     void setDisplayMode (DisplayMode newMode);
     void setFrozen (bool shouldBeFrozen);
     void setDisplayRange (float newRangeDb);
+    void setDetectedNote (const juce::String& note, float frequency);
     void resetPeakTrace();
     void mouseDoubleClick (const juce::MouseEvent&) override;
 
@@ -50,6 +52,11 @@ private:
     DisplayMode displayMode = DisplayMode::LR;
     bool frozen = false;
     float displayRangeDb = 90.0f;
+
+    // Pitch Detection
+    juce::String currentNote = "--";
+    float currentPitchFreq = 0.0f;
+    float noteAlpha = 0.0f; // For fading the note display
 
     static constexpr float minFrequency = 20.0f;
     static constexpr float maxFrequency = 20000.0f;

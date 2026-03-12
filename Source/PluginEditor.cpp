@@ -37,6 +37,7 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   addAndMakeVisible(pitchLabel);
   addAndMakeVisible(lrButton);
   addAndMakeVisible(msButton);
+  addAndMakeVisible(waterfallButton);
   addAndMakeVisible(rangeButton);
   addAndMakeVisible(freezeButton);
   addAndMakeVisible(analyzeOnlyButton);
@@ -67,6 +68,14 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   msButton.onClick = [this] {
     displayMode = SpectrumComponent::DisplayMode::MS;
     audioProcessor.setDisplayMode(1);
+    spectrumComponent.setDisplayMode(displayMode);
+    updateModeButtons();
+    updateMooseModeStyling();
+  };
+
+  waterfallButton.onClick = [this] {
+    displayMode = SpectrumComponent::DisplayMode::Waterfall;
+    audioProcessor.setDisplayMode(2); // New mode index
     spectrumComponent.setDisplayMode(displayMode);
     updateModeButtons();
     updateMooseModeStyling();
@@ -196,8 +205,9 @@ void UweVizAudioProcessorEditor::resized() {
   pitchLabel.setJustificationType(juce::Justification::centred);
 
   auto modeArea = rightGroup;
-  lrButton.setBounds(modeArea.removeFromLeft(56).reduced(4));
-  msButton.setBounds(modeArea.removeFromLeft(56).reduced(4));
+  lrButton.setBounds(modeArea.removeFromLeft(48).reduced(2));
+  msButton.setBounds(modeArea.removeFromLeft(48).reduced(2));
+  waterfallButton.setBounds(modeArea.removeFromLeft(96).reduced(2));
   modeArea.removeFromLeft(6);
   rangeButton.setBounds(modeArea.removeFromLeft(64).reduced(4));
   modeArea.removeFromLeft(6);
@@ -337,6 +347,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
   }
 
   pitchLabel.setText(currentNoteStr, juce::dontSendNotification);
+  spectrumComponent.setDetectedNote(currentNoteStr, smoothedFreq);
 
   auto &meter = audioProcessor.getMeterSource();
   elchComponent.setVizSignal(meter.getRmsLeft() + meter.getRmsRight(), 
@@ -372,6 +383,7 @@ void UweVizAudioProcessorEditor::updateModeButtons() {
 
   styleButton(lrButton, displayMode == SpectrumComponent::DisplayMode::LR);
   styleButton(msButton, displayMode == SpectrumComponent::DisplayMode::MS);
+  styleButton(waterfallButton, displayMode == SpectrumComponent::DisplayMode::Waterfall);
 
   freezeButton.setColour(juce::TextButton::buttonColourId,
                          frozen ? juce::Colour::fromRGB(180, 50, 40)

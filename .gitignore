@@ -5,3 +5,5 @@
 /JuceLibraryCode/
 /cmake-build-*/
 out/
+/JUCE/
+/Source.zip

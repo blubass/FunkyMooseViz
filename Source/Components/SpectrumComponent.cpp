@@ -18,6 +18,17 @@ void SpectrumComponent::setFrozen(bool shouldBeFrozen) {
   repaint();
 }
 
+void SpectrumComponent::setDetectedNote(const juce::String &note,
+                                        float frequency) {
+  if (note != "---" && note != "--") {
+    currentNote = note;
+    currentPitchFreq = frequency;
+    noteAlpha = juce::jmin(1.0f, noteAlpha + 0.15f);
+  } else {
+    noteAlpha = juce::jmax(0.0f, noteAlpha - 0.04f);
+  }
+}
+
 void SpectrumComponent::setDisplayRange(float newRangeDb) {
   displayRangeDb = newRangeDb;
   repaint();
@@ -28,7 +39,7 @@ void SpectrumComponent::smoothInto(const std::vector<float> &input,
   if (target.size() != input.size())
     target = input;
 
-  const float smoothing = 0.92f;
+  const float smoothing = 0.65f; // Faster reaction (was 0.92)
 
   for (size_t i = 0; i < input.size(); ++i)
     target[i] = smoothing * target[i] + (1.0f - smoothing) * input[i];
@@ -165,14 +176,13 @@ void SpectrumComponent::paint(juce::Graphics &g) {
   if (!spectrogramFrames.empty()) {
       const int numFrames = (int)spectrogramFrames.size();
       const float frameHeight = inner.getHeight() / (float)maxSpectrogramFrames;
+      const bool isFullWaterfall = (displayMode == DisplayMode::Waterfall);
       
       for (int i = 0; i < numFrames; ++i) {
           const auto& frame = spectrogramFrames[(size_t)i];
           const float y = inner.getBottom() - (float)(numFrames - i) * frameHeight;
           
-          // Draw a simplified version of the frame as a colored line
-          // We'll use the left/mid channel for simplicity
-          const int step = 4;
+          const int step = isFullWaterfall ? 2 : 4;
           for (int x = 0; x < (int)inner.getWidth(); x += step) {
               const float normX = (float)x / inner.getWidth();
               const float freqLog = std::log10(20.0f) + normX * (std::log10(20000.0f) - std::log10(20.0f));
@@ -181,7 +191,18 @@ void SpectrumComponent::paint(juce::Graphics &g) {
               
               float val = juce::jmap(frame[(size_t)bin], -displayRangeDb, 0.0f, 0.0f, 1.0f);
               if (val > 0.05f) {
-                  g.setColour(juce::Colour::fromRGB(88, 174, 219).withAlpha(val * 0.15f));
+                  if (isFullWaterfall) {
+                      // Heatmap color scheme: Blue -> Cyan -> Yellow -> White
+                      juce::Colour c;
+                      if (val < 0.3f) c = juce::Colour::fromRGB(0, 0, 100).interpolatedWith(juce::Colours::blue, val / 0.3f);
+                      else if (val < 0.6f) c = juce::Colours::blue.interpolatedWith(juce::Colours::cyan, (val - 0.3f) / 0.3f);
+                      else if (val < 0.8f) c = juce::Colours::cyan.interpolatedWith(juce::Colours::yellow, (val - 0.6f) / 0.2f);
+                      else c = juce::Colours::yellow.interpolatedWith(juce::Colours::white, (val - 0.8f) / 0.2f);
+                      
+                      g.setColour(c.withAlpha(0.8f));
+                  } else {
+                      g.setColour(juce::Colour::fromRGB(88, 174, 219).withAlpha(val * 0.15f));
+                  }
                   g.fillRect(inner.getX() + (float)x, y, (float)step, frameHeight);
               }
           }
@@ -271,7 +292,11 @@ void SpectrumComponent::paint(juce::Graphics &g) {
       buildSpectrumPath(smoothedRight, inner, sampleRate, fftSize, displayRangeDb);
 
   // Matches the Blue/Purple accents from the Amp
-  if (displayMode == DisplayMode::LR) {
+  if (displayMode == DisplayMode::Waterfall) {
+      // Don't draw the spectrum path in waterfall mode, or draw it as a thin line
+      g.setColour(juce::Colours::white.withAlpha(0.4f));
+      g.strokePath(leftPath, juce::PathStrokeType(1.0f));
+  } else if (displayMode == DisplayMode::LR) {
     drawFilledPath(leftPath, juce::Colour::fromRGB(88, 174, 219),
                    juce::Colour::fromRGBA(88, 174, 219, 40),
                    juce::Colour::fromRGBA(88, 174, 219, 120));
@@ -427,6 +452,14 @@ void SpectrumComponent::paint(juce::Graphics &g) {
     g.setFont(juce::FontOptions(12.0f));
     g.drawText(tooltipText, tooltipBounds, juce::Justification::centred, false);
   }
+
+  // Draw Mode Indicator
+  g.setColour(juce::Colours::white.withAlpha(0.3f));
+  g.setFont(juce::FontOptions(10.0f));
+  juce::String modeStr = "L/R";
+  if (displayMode == DisplayMode::MS) modeStr = "M/S";
+  else if (displayMode == DisplayMode::Waterfall) modeStr = "WATERFALL";
+  g.drawText(modeStr, inner.withTrimmedTop(inner.getHeight() - 15).withTrimmedLeft(inner.getWidth() - 60), juce::Justification::centredRight, false);
 }
 
 void SpectrumComponent::resetPeakTrace() {

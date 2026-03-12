@@ -26,6 +26,7 @@ public:
 
 private:
   float loudness = 0.0f;
+  float displayLoudness = 0.0f;
 };
 
 class CorrelationMeterComponent : public juce::Component {
@@ -35,4 +36,5 @@ public:
 
 private:
   float correlation = 1.0f;
+  float displayCorrelation = 1.0f;
 };
