@@ -1,3 +1,6 @@
+
+<img width="959" height="648" alt="Bildschirmfoto 2026-03-12 um 06 39 06" src="https://github.com/user-attachments/assets/a4265559-7afc-4eda-81ff-9e0f21f616c0" />
+
 # 🫎 Funky Moose Viz
 
 **Boutique-style audio visualizer for musicians, bass players and mix engineers.**
