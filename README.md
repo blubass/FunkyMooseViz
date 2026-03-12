@@ -1,57 +1,60 @@
 # 🫎 Funky Moose Viz
 
-## 🇬🇧 English
+**Boutique-style audio visualizer for musicians, bass players and mix engineers.**
 
-**A boutique-style audio visualizer for musicians, bass players and mix engineers.**
+Funky Moose Viz is a JUCE-based audio visualization plugin combining spectrum analysis, waveform display, vectorscope and musical pitch detection in one cohesive interface.
 
-Funky Moose Viz is a custom-built JUCE plugin that combines spectrum analysis, waveform display, vectorscope and musical pitch detection in a cohesive, character-driven interface.
+It was designed to support musical understanding of sound, not just technical measurement.
 
-It is designed to support musical decisions — not just to measure sound.
-
----
-
-### ✨ Why this exists
-Most visualizers are clinical tools. **Funky Moose Viz is different.**
-
-It was created to feel musical. To help you understand low-end energy, stereo image and pitch stability at a glance — without losing inspiration.
-
-It pairs perfectly with **Funky Moose Amp**, but works just as well on its own.
+Originally created to complement the Funky Moose Amp, but powerful enough to work as a standalone analysis tool.
 
 ---
 
 ### 🎛 Features
 - **Real-time Spectrum Analyzer**
-- **Waveform Display**
-- **Vector Scope** (Stereo & Mid-Side aware)
+- **Waveform display**
+- **Vector Scope** for stereo visualization
 - **Musical Pitch Detection**
-- **Boutique-inspired UI design**
-- **Lightweight JUCE-based architecture**
-- **AU / VST3 / Standalone builds**
+- **Vintage / boutique inspired UI**
+- **Lightweight JUCE architecture**
+- **Cross-platform builds**
+
+**Supported plugin formats:**
+- **AU** (macOS)
+- **VST3** (macOS / Windows)
+- **Standalone application**
 
 ---
 
 ### 🎯 Typical Use Cases
-- **Bass Monitoring**: Check fundamentals, overtone balance and pitch clarity.
-- **Stereo Control**: Visualize width and phase coherence in real time.
-- **Mix Bus Insight**: Understand spectral balance and low-end behaviour quickly.
-- **Sound Design**: Track harmonic movement and transient structure.
+
+#### Bass Monitoring
+Check fundamental frequencies, overtone balance and pitch stability.
+
+#### Stereo Image Control
+Visualize stereo width and phase coherence with the vectorscope.
+
+#### Mix Bus Insight
+Understand spectral balance and low-end behaviour at a glance.
+
+#### Sound Design
+Track harmonic movement and transient structure in real time.
 
 ---
 
-### 🖥 Supported Formats
-- **AU** (macOS)
-- **VST3** (macOS / Windows)
-- **Standalone Application**
+### 🖥 Screenshot
+*(Placeholder: Generate or add your screenshot here)*
 
 ---
 
 ### 🛠 Build From Source
+
 **Requirements:**
 - JUCE 8
 - CMake
 - Xcode (macOS) or Visual Studio (Windows)
 
-**Example:**
+**Example build:**
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
@@ -59,68 +62,80 @@ cmake --build build --config Release
 
 ---
 
-### ⚠️ Known Limitations
-- Pitch detection works best with monophonic material.
+### ⚠️ Notes
+- Pitch detection works best with monophonic signals.
 - GUI performance may vary on older systems.
-- Further refinements planned.
+- Further refinements are planned.
 
 ---
 
 ### 🚀 Roadmap
-- [ ] Improved pitch detection stability.
-- [ ] Waterfall spectrum refinement.
-- [ ] Optimized rendering performance.
-- [ ] Extended customization options.
+Future improvements may include:
+- improved pitch detection stability
+- refined spectrum visualization
+- GUI performance optimizations
+- additional user customization
+
+---
+
+### 🧠 Built With
+- JUCE Framework
+- Modern C++
+- CMake build system
 
 ---
 
 ## 🇩🇪 Deutsch
 
+### Funky Moose Viz
 **Ein Boutique-Audio-Visualizer für Musiker, Bassisten und Mix-Engineers.**
 
-Funky Moose Viz ist ein mit JUCE entwickeltes Plugin, das Spektrumanalyse, Waveform-Anzeige, Vektorskop und musikalische Pitch-Erkennung in einer charakterstarken Oberfläche vereint.
+Funky Moose Viz ist ein mit JUCE entwickeltes Audio-Plugin, das Spektrumanalyse, Wellenform-Anzeige, Vektorskop und musikalische Pitch-Erkennung in einer gemeinsamen Oberfläche kombiniert.
 
-Es soll musikalische Entscheidungen unterstützen — nicht nur messen.
+Das Ziel ist nicht nur Analyse, sondern ein besseres musikalisches Verständnis von Klang.
 
----
-
-### ✨ Warum es dieses Plugin gibt
-Viele Visualizer sind nüchterne Analysewerkzeuge. **Funky Moose Viz will mehr.**
-
-Es wurde entwickelt, um musikalisch zu wirken. Um Tieftonenergie, Stereo-Breite und Tonhöhenstabilität auf einen Blick erfassbar zu machen — ohne die Inspiration zu verlieren.
-
-Es ergänzt den **Funky Moose Amp** perfekt, funktioniert aber ebenso eigenständig.
+Ursprünglich als Ergänzung zum Funky Moose Amp entwickelt, funktioniert es ebenso als eigenständiges Visualisierungs-Tool.
 
 ---
 
-### 🎛 Funktionen
-- **Echtzeit-Spektrumanalyse**
-- **Wellenform-Anzeige**
-- **Vektorskop** (Stereo & Mid-Side)
-- **Musikalische Pitch-Erkennung**
-- **Boutique-inspiriertes UI-Design**
-- **Schlanke JUCE-Architektur**
-- **AU / VST3 / Standalone**
+### Funktionen
+- Echtzeit Spektrumanalyse
+- Wellenform-Anzeige
+- Vektorskop zur Stereo-Visualisierung
+- Pitch-Erkennung
+- Vintage-inspirierte Benutzeroberfläche
+- Schlanke JUCE-Architektur
+
+**Unterstützte Formate:**
+- AU (macOS)
+- VST3 (macOS / Windows)
+- Standalone-App
 
 ---
 
-### 🎯 Typische Einsatzbereiche
-- **Bass-Monitoring**: Grundton, Obertöne und Tonstabilität kontrollieren.
-- **Stereo-Kontrolle**: Breite und Phasenkohärenz visuell erfassen.
-- **Mix-Analyse**: Spektrale Balance und Low-End-Verhalten verstehen.
-- **Sounddesign**: Harmonische Bewegung und Transienten verfolgen.
+### Typische Anwendungen
 
----
+#### Bass-Analyse
+Grundton, Obertöne und Tonstabilität visuell kontrollieren.
 
-### 🖥 Unterstützte Formate
-- **AU** (macOS)
-- **VST3** (macOS / Windows)
-- **Standalone-App**
+#### Stereo-Kontrolle
+Breite und Phase des Signals im Vektorskop überwachen.
+
+#### Mix-Analyse
+Spektrale Balance und Low-End-Verhalten verstehen.
+
+#### Sounddesign
+Harmonische Struktur und Transienten verfolgen.
 
 ---
 
 ### 🧠 Philosophie
 > Klang wird nicht nur gehört. Er wird gesehen, gespürt und verstanden. Funky Moose Viz verbindet diese Ebenen.
+
+---
+
+### Lizenz
+MIT License
 
 ---
 *Copyright (c) 2026 blubass*
