@@ -45,6 +45,8 @@ juce_add_plugin(FunkyMooseViz
 
     FORMATS AU VST3 Standalone
 
+    ICON_BIG Icon.jpg
+
     MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Anzeige."
 )
