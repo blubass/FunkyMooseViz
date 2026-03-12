@@ -119,8 +119,6 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
 UweVizAudioProcessorEditor::~UweVizAudioProcessorEditor() {}
 
 void UweVizAudioProcessorEditor::paint(juce::Graphics &g) {
-  const auto bounds = getLocalBounds().toFloat();
-
   // Funky Moose Metallic Background
   g.setColour(juce::Colour::fromRGB(10, 10, 10));
   g.fillAll();

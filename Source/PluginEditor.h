@@ -40,7 +40,6 @@ private:
 
   juce::String currentNoteStr = "---";
   juce::String targetNoteStr = "---";
-  int noteHoldCount = 0;
 
   std::deque<float> freqHistory;
   float smoothedFreq = 0.0f;
