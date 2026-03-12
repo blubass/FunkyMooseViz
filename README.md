@@ -43,7 +43,7 @@ Track harmonic movement and transient structure in real time.
 ---
 
 ### 🖥 Screenshot
-![Funky Moose Viz Screenshot](Source/Assets/screenshot.png)
+![Funky Moose Viz Screenshot](screenshot.png)
 
 ---
 
