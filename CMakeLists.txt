@@ -5,37 +5,38 @@ project(FunkyMooseViz VERSION 0.1.4)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# =========================================================
-# JUCE Setup
-# =========================================================
+# ==============================
+# JUCE
+# ==============================
 
-# If JUCE is available as a subdirectory (e.g. in CI or a local clone), use it.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
     add_subdirectory(JUCE)
 else()
     find_package(JUCE CONFIG REQUIRED)
 endif()
 
-# =========================================================
+# ==============================
 # Binary Assets
-# =========================================================
+# ==============================
 
 juce_add_binary_data(FunkyMooseVizAssets
     SOURCES
         Source/Assets/image.png
 )
 
-# =========================================================
+# ==============================
 # Plugin Definition
-# =========================================================
+# ==============================
 
 juce_add_plugin(FunkyMooseViz
     COMPANY_NAME "Uwe Felchle"
+    PRODUCT_NAME "Funky Moose Viz"
+
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
-    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+
     COPY_PLUGIN_AFTER_BUILD TRUE
 
     PLUGIN_MANUFACTURER_CODE UweF
@@ -44,46 +45,43 @@ juce_add_plugin(FunkyMooseViz
 
     FORMATS AU VST3 Standalone
 
-    PRODUCT_NAME "Funky Moose Viz"
-    VERSION "0.1.4"
     MICROPHONE_PERMISSION_ENABLED TRUE
-    MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Analyzer-Anzeige."
-    ICON_BIG "Source/Assets/FunkyMoose.icns"
+    MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Anzeige."
 )
 
-# =========================================================
+# ==============================
 # Source Files
-# =========================================================
+# ==============================
 
 target_sources(FunkyMooseViz PRIVATE
-    # Main Files
-    Source/PluginProcessor.h
+    # Core
     Source/PluginProcessor.cpp
-    Source/PluginEditor.h
     Source/PluginEditor.cpp
+    Source/PluginProcessor.h
+    Source/PluginEditor.h
 
-    # Analysis Modules
-    Source/Analysis/FFTProcessor.h
+    # Analysis
     Source/Analysis/FFTProcessor.cpp
-    Source/Analysis/WaveformBuffer.h
+    Source/Analysis/FFTProcessor.h
     Source/Analysis/WaveformBuffer.cpp
-    Source/Analysis/LevelMeterSource.h
+    Source/Analysis/WaveformBuffer.h
     Source/Analysis/LevelMeterSource.cpp
+    Source/Analysis/LevelMeterSource.h
 
-    # UI Components
-    Source/Components/SpectrumComponent.h
+    # Components
     Source/Components/SpectrumComponent.cpp
-    Source/Components/WaveformComponent.h
+    Source/Components/SpectrumComponent.h
     Source/Components/WaveformComponent.cpp
-    Source/Components/MeterComponent.h
+    Source/Components/WaveformComponent.h
     Source/Components/MeterComponent.cpp
-    Source/Components/ElchComponent.h
+    Source/Components/MeterComponent.h
     Source/Components/ElchComponent.cpp
+    Source/Components/ElchComponent.h
 )
 
-# =========================================================
-# Compile Definitions
-# =========================================================
+# ==============================
+# Compiler Definitions
+# ==============================
 
 target_compile_definitions(FunkyMooseViz PRIVATE
     JUCE_WEB_BROWSER=0
@@ -91,9 +89,9 @@ target_compile_definitions(FunkyMooseViz PRIVATE
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
-# =========================================================
+# ==============================
 # Linking
-# =========================================================
+# ==============================
 
 target_link_libraries(FunkyMooseViz PRIVATE
     FunkyMooseVizAssets
