@@ -1,3 +1,4 @@
+[English version](./README.md)
 
 
 
@@ -114,32 +115,5 @@ Future improvements may include:
 
 ---
 
-## 🇩🇪 Deutsch
 
-### Funky Moose Viz
-**Echtzeit-Audio-Visualisierungstools für JUCE-Plugins und Audio-Apps.**
-
-Funky Moose Viz ist ein mit JUCE entwickeltes Audio-Plugin, das Spektrumanalyse, Wellenform-Anzeige, Vektorskop und musikalische Pitch-Erkennung in einer gemeinsamen Oberfläche kombiniert.
-
----
-
-### Funktionen
-- Echtzeit Spektrumanalyse
-- Wellenform-Anzeige
-- Vektorskop zur Stereo-Visualisierung
-- Pitch-Erkennung
-- Vintage-inspirierte Benutzeroberfläche
-- Schlanke JUCE-Architektur
-
----
-
-### 🧠 Philosophie
-> Klang wird nicht nur gehört. Er wird gesehen, gespürt und verstanden. Funky Moose Viz verbindet diese Ebenen.
-
----
-
-### Lizenz
-MIT License
-
----
 *Copyright (c) 2026 blubass*
