@@ -61,6 +61,7 @@ Sondern ein musikalisches Werkzeug für Spielerinnen und Spieler, die **Klarheit
 - intelligente Noise- und NaN-Sicherheit
 
 ---
+![Funky Moose Viz Screenshot](screenshot.png)
 
 ## Download
 
