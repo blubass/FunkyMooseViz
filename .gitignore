@@ -1,9 +1,28 @@
+# Build artifacts
 /build/
+/out/
+/bin/
+/cmake-build-*/
+/JuceLibraryCode/
+
+# IDEs
 /.vscode/
 /.idea/
+/*.user
+/*.suo
+/*.xcworkspace
+/*.xcodeproj
+/*.sln
+/*.vcxproj*
+
+# System files
 *.DS_Store
-/JuceLibraryCode/
-/cmake-build-*/
-out/
+Thumbs.db
+
+# JUCE specific
 /JUCE/
 /Source.zip
+*.lock
+
+# Logs
+*.log

@@ -1,19 +1,30 @@
 
 
 
-# 🫎 Funky Moose Viz
+![Funky Moose Viz](docs/banner.png)
 
-**Boutique-style audio visualizer for musicians, bass players and mix engineers.**
+# Funky Moose Viz
 
-Funky Moose Viz is a JUCE-based audio visualization plugin combining spectrum analysis, waveform display, vectorscope and musical pitch detection in one cohesive interface.
+**Real-time audio visualization tools for JUCE plugins and audio apps.**
 
-It was designed to support musical understanding of sound, not just technical measurement.
+![JUCE](https://img.shields.io/badge/JUCE-framework-orange)
+![C++](https://img.shields.io/badge/C++-17-blue)
+![OpenGL](https://img.shields.io/badge/OpenGL-rendering-green)
+![FFT](https://img.shields.io/badge/FFT-audio%20analysis-purple)
+![Platform](https://img.shields.io/badge/macOS-Windows-black)
+![Moose Powered](https://img.shields.io/badge/Moose%20Powered-Funky-darkgreen?style=for-the-badge)
 
-Originally created to complement the Funky Moose Amp, but powerful enough to work as a standalone analysis tool.
+## Features
+
+• **Spectrum analyzer** - High-resolution real-time frequency analysis  
+• **Audio visualization components** - Modular and reusable UI elements  
+• **Real-time FFT processing** - Low-latency windowed FFT analysis  
+• **Modern JUCE GUI** - Custom rendering with a vintage/boutique feel  
+• **Plugin / Standalone architecture** - Use as a VST3/AU plugin or independent app
 
 ---
 
-### 🎛 Features
+### 🎛 Detailed Capabilities
 - **Real-time Spectrum Analyzer**
 - **Waveform display**
 - **Vector Scope** for stereo visualization
@@ -53,15 +64,30 @@ Track harmonic movement and transient structure in real time.
 ### 🛠 Build From Source
 
 **Requirements:**
-- JUCE 8
-- CMake
-- Xcode (macOS) or Visual Studio (Windows)
+- **JUCE 8** (Latest stable)
+- **CMake 3.20+**
+- **Compiler:** Xcode (macOS), MSVC 2022 (Windows), or GCC/Clang (Linux)
 
-**Example build:**
+#### Quick Start (CLI)
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+# 1. Clone the repository
+git clone https://github.com/blubass/FunkyMooseViz.git
+cd FunkyMooseViz
+
+# 2. Configure CMake
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+# 3. Build the project
 cmake --build build --config Release
 ```
+
+The resulting binaries (VST3, AU, Standalone) will be located in the `build/FunkyMooseViz_artefacts` directory.
+
+---
+
+### 🏷 Repository Topics
+If you are managing this repo on GitHub, consider adding these topics for better discoverability:
+`juce` • `audio-visualization` • `fft` • `spectrum-analyzer` • `audio-plugin` • `dsp` • `opengl` • `cmake` • `audio-software`
 
 ---
 
@@ -91,13 +117,9 @@ Future improvements may include:
 ## 🇩🇪 Deutsch
 
 ### Funky Moose Viz
-**Ein Boutique-Audio-Visualizer für Musiker, Bassisten und Mix-Engineers.**
+**Echtzeit-Audio-Visualisierungstools für JUCE-Plugins und Audio-Apps.**
 
 Funky Moose Viz ist ein mit JUCE entwickeltes Audio-Plugin, das Spektrumanalyse, Wellenform-Anzeige, Vektorskop und musikalische Pitch-Erkennung in einer gemeinsamen Oberfläche kombiniert.
-
-Das Ziel ist nicht nur Analyse, sondern ein besseres musikalisches Verständnis von Klang.
-
-Ursprünglich als Ergänzung zum Funky Moose Amp entwickelt, funktioniert es ebenso als eigenständiges Visualisierungs-Tool.
 
 ---
 
@@ -108,27 +130,6 @@ Ursprünglich als Ergänzung zum Funky Moose Amp entwickelt, funktioniert es ebe
 - Pitch-Erkennung
 - Vintage-inspirierte Benutzeroberfläche
 - Schlanke JUCE-Architektur
-
-**Unterstützte Formate:**
-- AU (macOS)
-- VST3 (macOS / Windows)
-- Standalone-App
-
----
-
-### Typische Anwendungen
-
-#### Bass-Analyse
-Grundton, Obertöne und Tonstabilität visuell kontrollieren.
-
-#### Stereo-Kontrolle
-Breite und Phase des Signals im Vektorskop überwachen.
-
-#### Mix-Analyse
-Spektrale Balance und Low-End-Verhalten verstehen.
-
-#### Sounddesign
-Harmonische Struktur und Transienten verfolgen.
 
 ---
 
