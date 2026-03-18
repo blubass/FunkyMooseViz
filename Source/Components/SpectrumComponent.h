@@ -26,6 +26,7 @@ public:
     void resetPeakTrace();
     void mouseDoubleClick (const juce::MouseEvent&) override;
 
+    void resized() override;
     void paint (juce::Graphics& g) override;
 
 private:
@@ -57,6 +58,10 @@ private:
     juce::String currentNote = "--";
     float currentPitchFreq = 0.0f;
     float noteAlpha = 0.0f; // For fading the note display
+
+    void updateLookupTable();
+    std::vector<int> binLookupTable;
+    bool needsLookupUpdate = true;
 
     static constexpr float minFrequency = 20.0f;
     static constexpr float maxFrequency = 20000.0f;

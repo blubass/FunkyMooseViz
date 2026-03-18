@@ -4,8 +4,33 @@ SpectrumComponent::SpectrumComponent() {
 }
 
 void SpectrumComponent::setAnalysisInfo(double newSampleRate, int newFFTSize) {
-  sampleRate = newSampleRate;
-  fftSize = newFFTSize;
+  if (sampleRate != newSampleRate || fftSize != newFFTSize) {
+    sampleRate = newSampleRate;
+    fftSize = newFFTSize;
+    needsLookupUpdate = true;
+  }
+}
+
+void SpectrumComponent::resized() {
+  needsLookupUpdate = true;
+}
+
+void SpectrumComponent::updateLookupTable() {
+  auto inner = getLocalBounds().toFloat().reduced(12.0f);
+  const int width = (int)inner.getWidth();
+  if (width <= 0) return;
+
+  binLookupTable.resize((size_t)width);
+  const float minLog = std::log10(minFrequency);
+  const float maxLog = std::log10(maxFrequency);
+
+  for (int x = 0; x < width; ++x) {
+    const float normX = (float)x / (float)width;
+    const float freqLog = minLog + normX * (maxLog - minLog);
+    const float freq = std::pow(10.0f, freqLog);
+    binLookupTable[(size_t)x] = juce::jlimit(0, fftSize / 2, (int)(freq * fftSize / sampleRate));
+  }
+  needsLookupUpdate = false;
 }
 
 void SpectrumComponent::setDisplayMode(DisplayMode newMode) {
@@ -174,22 +199,22 @@ void SpectrumComponent::paint(juce::Graphics &g) {
 
   // --- SPECTROGRAM (WATERFALL) ---
   if (!spectrogramFrames.empty()) {
+      if (needsLookupUpdate)
+          updateLookupTable();
+
       const int numFrames = (int)spectrogramFrames.size();
       const float frameHeight = inner.getHeight() / (float)maxSpectrogramFrames;
       const bool isFullWaterfall = (displayMode == DisplayMode::Waterfall);
-      
+      const int step = isFullWaterfall ? 2 : 4;
+
       for (int i = 0; i < numFrames; ++i) {
           const auto& frame = spectrogramFrames[(size_t)i];
           const float y = inner.getBottom() - (float)(numFrames - i) * frameHeight;
           
-          const int step = isFullWaterfall ? 2 : 4;
           for (int x = 0; x < (int)inner.getWidth(); x += step) {
-              const float normX = (float)x / inner.getWidth();
-              const float freqLog = std::log10(20.0f) + normX * (std::log10(20000.0f) - std::log10(20.0f));
-              const float freq = std::pow(10.0f, freqLog);
-              const int bin = juce::jlimit(0, (int)frame.size()-1, (int)(freq * fftSize / sampleRate));
-              
+              const int bin = binLookupTable[(size_t)x];
               float val = juce::jmap(frame[(size_t)bin], -displayRangeDb, 0.0f, 0.0f, 1.0f);
+
               if (val > 0.05f) {
                   if (isFullWaterfall) {
                       // Heatmap color scheme: Blue -> Cyan -> Yellow -> White

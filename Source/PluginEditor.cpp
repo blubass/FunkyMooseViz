@@ -49,12 +49,12 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   meterLeft.setLabel("LEFT");
   meterRight.setLabel("RIGHT");
 
-  analyzeOnlyButton.setToggleState(audioProcessor.getAnalyzeOnly(),
+  analyzeOnlyButton.setToggleState(!audioProcessor.getAnalyzeOnly(),
                                    juce::dontSendNotification);
   analyzeOnlyButton.setColour(juce::ToggleButton::textColourId,
                               juce::Colour::fromRGBA(230, 235, 240, 190));
   analyzeOnlyButton.onClick = [this] {
-    audioProcessor.setAnalyzeOnly(analyzeOnlyButton.getToggleState());
+    audioProcessor.setAnalyzeOnly(!analyzeOnlyButton.getToggleState());
   };
 
   lrButton.onClick = [this] {
@@ -114,7 +114,6 @@ UweVizAudioProcessorEditor::UweVizAudioProcessorEditor(UweVizAudioProcessor &p)
   }
 
   updateModeButtons();
-  addAndMakeVisible(pitchLabel);
   pitchLabel.setJustificationType(juce::Justification::centred);
   pitchLabel.setFont(juce::FontOptions(22.0f).withStyle("Bold"));
   pitchLabel.setColour(juce::Label::textColourId, juce::Colour::fromRGB(88, 174, 219));
@@ -283,7 +282,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
                   for (size_t i = 0; i < hpsSize; ++i) 
                       hps[i] = spectrum[i] / maxMag; 
 
-                  // Harmoic Product: multiply by harmonics 2, 3, 4
+                  // Harmonic Product: multiply by harmonics 2, 3, 4
                   for (int h = 2; h <= hpsOrder; ++h) {
                       for (size_t i = 0; i < hpsSize; ++i) {
                           hps[i] *= (spectrum[i * (size_t)h] / maxMag);

@@ -98,8 +98,16 @@ void UweVizAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     if (left != nullptr)
         waveformBuffer.pushStereoSamples (left, right, numSamples);
 
-    for (int ch = numChannels; ch < getTotalNumOutputChannels(); ++ch)
-        buffer.clear (ch, 0, numSamples);
+    if (analyzeOnly)
+    {
+        for (int ch = 0; ch < getTotalNumOutputChannels(); ++ch)
+            buffer.clear (ch, 0, numSamples);
+    }
+    else
+    {
+        for (int ch = numChannels; ch < getTotalNumOutputChannels(); ++ch)
+            buffer.clear (ch, 0, numSamples);
+    }
 }
 
 juce::AudioProcessorEditor* UweVizAudioProcessor::createEditor()

@@ -113,10 +113,10 @@ private:
     std::vector<float> tempMidBuffer;
     std::vector<float> tempSideBuffer;
 
-    bool analyzeOnly = true;
-    int displayMode = 0;
-    bool frozen = false;
-    int displayRangeDb = 90;
+    std::atomic<bool> analyzeOnly { true };
+    std::atomic<int> displayMode { 0 };
+    std::atomic<bool> frozen { false };
+    std::atomic<int> displayRangeDb { 90 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UweVizAudioProcessor)
 };

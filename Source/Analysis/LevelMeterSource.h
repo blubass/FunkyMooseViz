@@ -2,6 +2,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <atomic>
 
 class LevelMeterSource {
 public:
@@ -20,14 +21,14 @@ public:
   float getCorrelation() const { return correlation; }
 
 private:
-  float peakL = 0.0f;
-  float peakR = 0.0f;
-  float holdL = 0.0f;
-  float holdR = 0.0f;
-  float rmsL = 0.0f;
-  float rmsR = 0.0f;
-  float loudness = 0.0f;
-  float correlation = 0.0f;
+  std::atomic<float> peakL { 0.0f };
+  std::atomic<float> peakR { 0.0f };
+  std::atomic<float> holdL { 0.0f };
+  std::atomic<float> holdR { 0.0f };
+  std::atomic<float> rmsL { 0.0f };
+  std::atomic<float> rmsR { 0.0f };
+  std::atomic<float> loudness { 0.0f };
+  std::atomic<float> correlation { 0.0f };
 
   double currentSampleRate = 44100.0;
   float peakFalloff = 0.03f;

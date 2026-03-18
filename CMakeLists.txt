@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(FunkyMooseViz VERSION 1.2.0)
+project(FunkyMooseViz VERSION 0.4.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

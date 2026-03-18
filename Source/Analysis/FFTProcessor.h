@@ -16,19 +16,6 @@ public:
     bool getMagnitudes (std::vector<float>& result);
     bool getLinearMagnitudes (std::vector<float>& result);
 
-    bool isNewDataAvailable() const noexcept
-    {
-        return publishedFrameCounter.load(std::memory_order_acquire)
-             != consumedFrameCounter.load(std::memory_order_acquire);
-    }
-
-    void clearNewDataFlag() noexcept
-    {
-        consumedFrameCounter.store(
-            publishedFrameCounter.load(std::memory_order_acquire),
-            std::memory_order_release);
-    }
-
     double getSampleRate() const noexcept { return currentSampleRate; }
     int getFFTSize() const noexcept       { return fftSize; }
 

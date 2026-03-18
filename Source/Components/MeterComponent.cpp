@@ -275,5 +275,5 @@ void LoudnessMeterComponent::paint(juce::Graphics &g) {
 
   g.setColour(juce::Colour::fromRGB(180, 210, 230));
   g.setFont(juce::FontOptions(10.0f).withStyle("Bold"));
-  g.drawText("LUFS", labelArea.withTrimmedBottom(10), juce::Justification::centred, false);
+  g.drawText("LEVEL", labelArea.withTrimmedBottom(10), juce::Justification::centred, false);
 }

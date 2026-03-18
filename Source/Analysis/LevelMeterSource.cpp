@@ -33,10 +33,10 @@ void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
     }
 
     // Update peaks with intercepted sample peaks
-    peakL = juce::jmax(peakL, ispL);
-    peakR = juce::jmax(peakR, ispR);
-    holdL = juce::jmax(holdL, ispL);
-    holdR = juce::jmax(holdR, ispR);
+    peakL = juce::jmax(peakL.load(), ispL);
+    peakR = juce::jmax(peakR.load(), ispR);
+    holdL = juce::jmax(holdL.load(), ispL);
+    holdR = juce::jmax(holdR.load(), ispR);
   }
 
   // Calculate a simplified "Perceived Loudness" (Weighted RMS)
@@ -92,10 +92,10 @@ void LevelMeterSource::processBlock(const juce::AudioBuffer<float> &buffer) {
     correlation = 1.0f;
   }
 
-  peakL = juce::jmax(peakL, newPeakL);
-  peakR = juce::jmax(peakR, newPeakR);
-  holdL = juce::jmax(holdL, newPeakL);
-  holdR = juce::jmax(holdR, newPeakR);
+  peakL = juce::jmax(peakL.load(), newPeakL);
+  peakR = juce::jmax(peakR.load(), newPeakR);
+  holdL = juce::jmax(holdL.load(), newPeakL);
+  holdR = juce::jmax(holdR.load(), newPeakR);
   rmsL = rmsL + rmsSmoothing * (newRmsL - rmsL);
   rmsR = rmsR + rmsSmoothing * (newRmsR - rmsR);
 }
