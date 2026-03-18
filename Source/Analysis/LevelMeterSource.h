@@ -30,6 +30,10 @@ private:
   std::atomic<float> loudness { 0.0f };
   std::atomic<float> correlation { 0.0f };
 
+  // K-Weighting filters for BS.1770 LUFS
+  juce::dsp::IIR::Filter<float> kWeightStage1L, kWeightStage1R; // High Shelf
+  juce::dsp::IIR::Filter<float> kWeightStage2L, kWeightStage2R; // High Pass
+
   double currentSampleRate = 44100.0;
   float peakFalloff = 0.03f;
   float holdFalloff = 0.008f;

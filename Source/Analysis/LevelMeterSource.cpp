@@ -9,6 +9,18 @@ void LevelMeterSource::prepare(double sampleRate, int maxSamplesPerBlock) {
       2, 2, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true,
       false);
   truePeakOversampler->initProcessing(static_cast<size_t>(maxSamplesPerBlock));
+  
+  // Initialize K-Weighting Filters
+  auto stage1Coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, 1500.0, 0.707f, 1.584f); // +4dB
+  auto stage2Coeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 100.0, 0.5f); // RLB
+  
+  *kWeightStage1L.coefficients = *stage1Coeffs;
+  *kWeightStage1R.coefficients = *stage1Coeffs;
+  *kWeightStage2L.coefficients = *stage2Coeffs;
+  *kWeightStage2R.coefficients = *stage2Coeffs;
+  
+  kWeightStage1L.reset(); kWeightStage1R.reset();
+  kWeightStage2L.reset(); kWeightStage2R.reset();
 }
 
 void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
@@ -38,11 +50,55 @@ void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
     holdL = juce::jmax(holdL.load(), ispL);
     holdR = juce::jmax(holdR.load(), ispR);
   }
-
-  // Calculate a simplified "Perceived Loudness" (Weighted RMS)
-  float totalRms = (rmsL + rmsR) * 0.5f;
-  // Weighting: slightly prioritize mids/highs for "funkiness" perception
-  loudness = loudness + 0.15f * (totalRms - loudness);
+  
+  // Calculate Actual BS.1770-4 Loudness (K-Weighted RMS)
+  juce::AudioBuffer<float> kFilteredBuffer;
+  kFilteredBuffer.makeCopyOf(buffer);
+  
+  const int numSamples = kFilteredBuffer.getNumSamples();
+  const int numChannels = kFilteredBuffer.getNumChannels();
+  
+  if (numChannels > 0) {
+      float* data = kFilteredBuffer.getWritePointer(0);
+      for (int i = 0; i < numSamples; ++i) {
+          data[i] = kWeightStage2L.processSample(kWeightStage1L.processSample(data[i]));
+      }
+  }
+  if (numChannels > 1) {
+      float* data = kFilteredBuffer.getWritePointer(1);
+      for (int i = 0; i < numSamples; ++i) {
+          data[i] = kWeightStage2R.processSample(kWeightStage1R.processSample(data[i]));
+      }
+  }
+  
+  float kRmsL = 0.0f;
+  float kRmsR = 0.0f;
+  
+  if (numChannels > 0) {
+      double sum = 0.0;
+      const float* data = kFilteredBuffer.getReadPointer(0);
+      for (int i = 0; i < numSamples; ++i) sum += data[i] * data[i];
+      kRmsL = std::sqrt((float)(sum / juce::jmax(1, numSamples)));
+  }
+  if (numChannels > 1) {
+      double sum = 0.0;
+      const float* data = kFilteredBuffer.getReadPointer(1);
+      for (int i = 0; i < numSamples; ++i) sum += data[i] * data[i];
+      kRmsR = std::sqrt((float)(sum / juce::jmax(1, numSamples)));
+  }
+  
+  // BS.1770-4 Loudness (K-Weighted RMS)
+  const float kTotalRms = (numChannels > 1) ? std::sqrt((kRmsL * kRmsL + kRmsR * kRmsR) * 0.5f) : kRmsL;
+  
+  // BS.1770-4 formula for Momentary Loudness (approximate without 3s window)
+  // LUFS = 10 * log10(Mean Square) - 0.69 (simplified)
+  float lufs = (kTotalRms > 0.0000001f) ? (20.0f * std::log10(kTotalRms) - 0.69f) : -100.0f;
+  
+  // Map LUFS to 0..1 range for the meter display (-60 to 0 LUFS range)
+  float lufsNorm = juce::jlimit(0.0f, 1.0f, juce::jmap(lufs, -60.0f, 0.0f, 0.0f, 1.0f));
+  
+  float currentLoudness = loudness.load();
+  loudness.store(currentLoudness + 0.12f * (lufsNorm - currentLoudness));
 }
 
 void LevelMeterSource::processBlock(const juce::AudioBuffer<float> &buffer) {
