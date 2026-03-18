@@ -30,6 +30,7 @@ public:
 
     void setVizMode (VizMode newMode);
     void setVizSignal (float rms, float peak);
+    void setSpectrum (const std::vector<float>& spectrum);
 
     void paint (juce::Graphics& g) override;
 
@@ -39,6 +40,7 @@ private:
 
     VizMode vizMode { VizMode::LR };
 
+    std::vector<float> currentSpectrum;
     float glowAmount = 0.0f;
     float eyeFlash   = 0.0f;
     float inputLevel = 0.0f;

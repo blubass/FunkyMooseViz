@@ -39,6 +39,12 @@ void ElchComponent::setVizSignal (float rms, float peak)
     repaint();
 }
 
+void ElchComponent::setSpectrum (const std::vector<float>& spectrum)
+{
+    currentSpectrum = spectrum;
+    repaint();
+}
+
 void ElchComponent::paint (juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
@@ -84,5 +90,31 @@ void ElchComponent::paint (juce::Graphics& g)
                            (int) imgArea.getX(), (int) imgArea.getY(),
                            (int) imgArea.getWidth(), (int) imgArea.getHeight(),
                            juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        
+        // --- ANTLER VISUALIZER ---
+        // We draw small spectrum-driven glows on the antlers
+        if (!currentSpectrum.empty()) {
+            const float centerX = bounds.getCentreX();
+            const float centerY = bounds.getCentreY();
+            const float logoSize = juce::jmin(bounds.getWidth(), bounds.getHeight());
+            
+            auto drawAntlerGlow = [&](float xOff, float yOff, int bin) {
+                float mag = currentSpectrum[(size_t)juce::jlimit(0, (int)currentSpectrum.size()-1, bin)];
+                float val = juce::jlimit(0.0f, 1.0f, juce::jmap(mag, -70.0f, -10.0f, 0.0f, 1.0f));
+                
+                if (val > 0.1f) {
+                    g.setColour(modeAura.withAlpha(val * 0.4f));
+                    g.fillEllipse(centerX + xOff * logoSize - 8.0f, centerY + yOff * logoSize - 8.0f, 16.0f, 16.0f);
+                    g.setColour(juce::Colours::white.withAlpha(val * 0.6f));
+                    g.fillEllipse(centerX + xOff * logoSize - 3.0f, centerY + yOff * logoSize - 3.0f, 6.0f, 6.0f);
+                }
+            };
+            
+            // Antler mapping (relative to center)
+            drawAntlerGlow(-0.25f, -0.35f, 5);  // Left Low
+            drawAntlerGlow(-0.35f, -0.25f, 15); // Left Mid
+            drawAntlerGlow(0.25f, -0.35f, 8);   // Right Low
+            drawAntlerGlow(0.35f, -0.25f, 20);  // Right Mid
+        }
     }
 }

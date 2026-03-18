@@ -189,7 +189,8 @@ void UweVizAudioProcessorEditor::resized() {
   auto header = area.removeFromTop(88);
 
   // Logo Left (Square-ish)
-  elchComponent.setBounds(header.removeFromLeft(100).reduced(10));
+  // Logo Left (Square-ish) -> Made it larger!
+  elchComponent.setBounds(header.removeFromLeft(125).reduced(4));
   header.removeFromLeft(4);
 
   auto titleArea = header.removeFromLeft(300).reduced(0, 18);
@@ -260,6 +261,7 @@ void UweVizAudioProcessorEditor::timerCallback() {
           audioProcessor.getFFTProcessorSide().getMagnitudes(magsB);
           spectrumComponent.setMagnitudesRight(magsB);
       }
+      elchComponent.setSpectrum(magsA);
 
       std::vector<float> waveformL, waveformR;
       audioProcessor.getWaveformBuffer().getStereoWaveform(waveformL, waveformR);
