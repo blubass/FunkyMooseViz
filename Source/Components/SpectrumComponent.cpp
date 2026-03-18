@@ -216,9 +216,9 @@ void SpectrumComponent::paint(juce::Graphics &g) {
               float val = juce::jmap(frame[(size_t)bin], -displayRangeDb, 0.0f, 0.0f, 1.0f);
 
               if (val > 0.05f) {
+                  juce::Colour c;
                   if (isFullWaterfall) {
                       // Heatmap color scheme: Blue -> Cyan -> Yellow -> White
-                      juce::Colour c;
                       if (val < 0.3f) c = juce::Colour::fromRGB(0, 0, 100).interpolatedWith(juce::Colours::blue, val / 0.3f);
                       else if (val < 0.6f) c = juce::Colours::blue.interpolatedWith(juce::Colours::cyan, (val - 0.3f) / 0.3f);
                       else if (val < 0.8f) c = juce::Colours::cyan.interpolatedWith(juce::Colours::yellow, (val - 0.6f) / 0.2f);
@@ -226,7 +226,8 @@ void SpectrumComponent::paint(juce::Graphics &g) {
                       
                       g.setColour(c.withAlpha(0.8f));
                   } else {
-                      g.setColour(juce::Colour::fromRGB(88, 174, 219).withAlpha(val * 0.15f));
+                      c = juce::Colour::fromRGB(88, 174, 219);
+                      g.setColour(c.withAlpha(val * 0.15f));
                   }
                   g.fillRect(inner.getX() + (float)x, y, (float)step, frameHeight);
 
