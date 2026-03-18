@@ -229,6 +229,12 @@ void SpectrumComponent::paint(juce::Graphics &g) {
                       g.setColour(juce::Colour::fromRGB(88, 174, 219).withAlpha(val * 0.15f));
                   }
                   g.fillRect(inner.getX() + (float)x, y, (float)step, frameHeight);
+
+                  // Add a slight bloom/glow to the newest line (bottom line)
+                  if (i == numFrames - 1) {
+                      g.setColour(c.withAlpha(0.3f));
+                      g.fillRect(inner.getX() + (float)x, y - 1.0f, (float)step, 3.0f);
+                  }
               }
           }
       }
@@ -485,6 +491,29 @@ void SpectrumComponent::paint(juce::Graphics &g) {
   if (displayMode == DisplayMode::MS) modeStr = "M/S";
   else if (displayMode == DisplayMode::Waterfall) modeStr = "WATERFALL";
   g.drawText(modeStr, inner.withTrimmedTop(inner.getHeight() - 15).withTrimmedLeft(inner.getWidth() - 60), juce::Justification::centredRight, false);
+
+  // --- PREMIUM FINISH: GLASS & VIGNETTE ---
+  g.setOrigin(0, 0);
+  
+  // 1. Subtle Vignette
+  juce::ColourGradient vignette(juce::Colours::transparentBlack, inner.getCentreX(), inner.getCentreY(),
+                                juce::Colours::black.withAlpha(0.25f), inner.getX(), inner.getY(), true);
+  g.setGradientFill(vignette);
+  g.fillRoundedRectangle(inner, 2.0f);
+
+  // 2. Glass Reflection Shine (Diagonal)
+  juce::Path glassPath;
+  glassPath.addRoundedRectangle(inner.getX(), inner.getY(), inner.getWidth(), inner.getHeight(), 2.0f);
+  g.reduceClipRegion(glassPath);
+  
+  juce::ColourGradient glassGrad(juce::Colours::white.withAlpha(0.06f), inner.getX(), inner.getY(),
+                                 juce::Colours::transparentWhite, inner.getCentreX() + inner.getWidth() * 0.2f, inner.getCentreY() + inner.getHeight() * 0.2f, false);
+  g.setGradientFill(glassGrad);
+  g.fillPath(glassPath);
+
+  // 3. Inner Shadow/Rim
+  g.setColour(juce::Colours::black.withAlpha(0.4f));
+  g.drawRoundedRectangle(inner, 2.0f, 1.2f);
 }
 
 void SpectrumComponent::resetPeakTrace() {

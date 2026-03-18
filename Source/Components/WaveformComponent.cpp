@@ -152,4 +152,27 @@ void WaveformComponent::paint(juce::Graphics &g) {
   g.setFont(juce::FontOptions(12.0f).withStyle("Bold"));
   g.drawText("VECTOR", scopeArea.toNearestInt(), juce::Justification::centredBottom, false);
   g.drawText("WAVEFORM", inner.toNearestInt(), juce::Justification::centredBottom, false);
+
+  // --- PREMIUM FINISH: GLASS & VIGNETTE ---
+  g.setOrigin(0, 0);
+  
+  // 1. Subtle Vignette
+  juce::ColourGradient vignette(juce::Colours::transparentBlack, inner.getCentreX(), inner.getCentreY(),
+                                juce::Colours::black.withAlpha(0.25f), inner.getX(), inner.getY(), true);
+  g.setGradientFill(vignette);
+  g.fillRoundedRectangle(inner, 2.0f);
+
+  // 2. Glass Reflection Shine (Diagonal)
+  juce::Path glassPath;
+  glassPath.addRoundedRectangle(inner.getX(), inner.getY(), inner.getWidth(), inner.getHeight(), 2.0f);
+  g.reduceClipRegion(glassPath);
+  
+  juce::ColourGradient glassGrad(juce::Colours::white.withAlpha(0.06f), inner.getX(), inner.getY(),
+                                 juce::Colours::transparentWhite, inner.getCentreX() + inner.getWidth() * 0.2f, inner.getCentreY() + inner.getHeight() * 0.2f, false);
+  g.setGradientFill(glassGrad);
+  g.fillPath(glassPath);
+
+  // 3. Inner Shadow/Rim
+  g.setColour(juce::Colours::black.withAlpha(0.4f));
+  g.drawRoundedRectangle(inner, 2.0f, 1.2f);
 }
