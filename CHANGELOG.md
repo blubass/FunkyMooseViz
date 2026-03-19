@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.4.0] - 2026-03-18
-### Added
-- New **Spectrum Analyzer** features (Waterfall mode).
-- **Musical Pitch Detection** integration.
-- **Stereo Correlation Meter** (Vectorscope).
+- New **Spectrum Analyzer** features (Waterfall mode, Heatmap mode).
+- **Musical Pitch Detection** with note and cent indicator.
+- **Stereo Correlation Meter** (Vectorscope and history).
+- **Premium Hardware UI**: Added glass reflection, display vignette, and localized glows.
+- **Improved Elch Logo**: Larger visual presence with spectrum-driven antler glows.
+- **Loudness Meter**: Accurate BS.1770-4 K-Weighting (LUFS) for Momentum measurement.
 - **Master Analysis Frame Counter** for synchronized GUI updates.
 - Refactored **WaveformBuffer** for real-time safety.
 - New professional **README** with banner and badges.
