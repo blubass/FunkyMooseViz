@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(FunkyMooseViz VERSION 0.4.0)
+project(FunkyMooseViz VERSION 0.5.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,7 +45,7 @@ juce_add_plugin(FunkyMooseViz
 
     FORMATS AU VST3 Standalone
 
-    ICON_BIG Icon.jpg
+    ICON_BIG Source/Assets/image.png  # Changed icon path to actual asset - Icon image must exist here
 
     MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "Funky Moose Viz benötigt Audioeingang für die Anzeige."
@@ -55,6 +55,7 @@ juce_add_plugin(FunkyMooseViz
 # Source Files
 # ==============================
 
+# Core module source files
 set(FunkyMooseViz_SOURCES
     # Core
     Source/PluginProcessor.cpp
@@ -83,6 +84,8 @@ set(FunkyMooseViz_SOURCES
 
 target_sources(FunkyMooseViz PRIVATE ${FunkyMooseViz_SOURCES})
 
+target_include_directories(FunkyMooseViz PRIVATE Source)  # Added to include Source directory headers
+
 # Organisiert die Dateien in der IDE (Xcode/VS) in der echten Ordnerstruktur
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Source" PREFIX "Source" FILES ${FunkyMooseViz_SOURCES})
 
@@ -109,3 +112,6 @@ target_link_libraries(FunkyMooseViz PRIVATE
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
+
+# ==============================
+

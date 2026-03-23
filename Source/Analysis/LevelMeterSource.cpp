@@ -21,6 +21,12 @@ void LevelMeterSource::prepare(double sampleRate, int maxSamplesPerBlock) {
   
   kWeightStage1L.reset(); kWeightStage1R.reset();
   kWeightStage2L.reset(); kWeightStage2R.reset();
+
+  // Momentary LUFS 400ms window buffer init
+  int momentarySamples = static_cast<int>(sampleRate * 0.4);
+  momentaryBufferL.assign(static_cast<size_t>(momentarySamples), 0.0f);
+  momentaryBufferR.assign(static_cast<size_t>(momentarySamples), 0.0f);
+  momentaryWritePosition = 0;
 }
 
 void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
@@ -71,34 +77,57 @@ void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
       }
   }
   
-  float kRmsL = 0.0f;
-  float kRmsR = 0.0f;
-  
-  if (numChannels > 0) {
-      double sum = 0.0;
-      const float* data = kFilteredBuffer.getReadPointer(0);
-      for (int i = 0; i < numSamples; ++i) sum += data[i] * data[i];
-      kRmsL = std::sqrt((float)(sum / juce::jmax(1, numSamples)));
+  // Add to 400ms sliding window ring buffer
+  const int momentarySamples = static_cast<int>(momentaryBufferL.size());
+  if (momentarySamples > 0) {
+      int writePosL = momentaryWritePosition;
+      int writePosR = momentaryWritePosition;
+      
+      if (numChannels > 0) {
+          const float* data = kFilteredBuffer.getReadPointer(0);
+          for (int i = 0; i < numSamples; ++i) {
+              momentaryBufferL[static_cast<size_t>(writePosL)] = data[i] * data[i];
+              writePosL = (writePosL + 1) % momentarySamples;
+          }
+      }
+      if (numChannels > 1) {
+          const float* data = kFilteredBuffer.getReadPointer(1);
+          for (int i = 0; i < numSamples; ++i) {
+              momentaryBufferR[static_cast<size_t>(writePosR)] = data[i] * data[i];
+              writePosR = (writePosR + 1) % momentarySamples;
+          }
+      }
+      if (numChannels > 0) momentaryWritePosition = writePosL;
   }
-  if (numChannels > 1) {
-      double sum = 0.0;
-      const float* data = kFilteredBuffer.getReadPointer(1);
-      for (int i = 0; i < numSamples; ++i) sum += data[i] * data[i];
-      kRmsR = std::sqrt((float)(sum / juce::jmax(1, numSamples)));
+  
+  // Calculate Mean Square over the full 400ms window
+  float meanSquareL = 0.0f;
+  float meanSquareR = 0.0f;
+  
+  if (momentarySamples > 0) {
+      float sumL = 0.0f;
+      for (float val : momentaryBufferL) sumL += val;
+      meanSquareL = sumL / (float)momentarySamples;
+      
+      float sumR = 0.0f;
+      for (float val : momentaryBufferR) sumR += val;
+      meanSquareR = sumR / (float)momentarySamples;
   }
   
-  // BS.1770-4 Loudness (K-Weighted RMS)
-  const float kTotalRms = (numChannels > 1) ? std::sqrt((kRmsL * kRmsL + kRmsR * kRmsR) * 0.5f) : kRmsL;
+  // BS.1770-4 Loudness sum: Energies are summed (no average dividing by 2!)
+  const float totalMeanSquare = (numChannels > 1) ? (meanSquareL + meanSquareR) : meanSquareL;
   
-  // BS.1770-4 formula for Momentary Loudness (approximate without 3s window)
-  // LUFS = 10 * log10(Mean Square) - 0.69 (simplified)
-  float lufs = (kTotalRms > 0.0000001f) ? (20.0f * std::log10(kTotalRms) - 0.69f) : -100.0f;
+  // BS.1770-4 formula for Momentary Loudness 
+  // LUFS = -0.69 + 10 * log10(Total Mean Square)
+  float lufs = (totalMeanSquare > 0.0000001f) ? (-0.69f + 10.0f * std::log10(totalMeanSquare)) : -100.0f;
   
   // Map LUFS to 0..1 range for the meter display (-60 to 0 LUFS range)
   float lufsNorm = juce::jlimit(0.0f, 1.0f, juce::jmap(lufs, -60.0f, 0.0f, 0.0f, 1.0f));
   
   float currentLoudness = loudness.load();
-  loudness.store(currentLoudness + 0.12f * (lufsNorm - currentLoudness));
+  // Less artificial smoothing needed now since we have a true 400ms window, 
+  // but a tiny bit prevents visual jitter from UI framerates
+  loudness.store(currentLoudness + 0.35f * (lufsNorm - currentLoudness));
 }
 
 void LevelMeterSource::processBlock(const juce::AudioBuffer<float> &buffer) {

@@ -32,21 +32,22 @@ void UweVizAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 
 void UweVizAudioProcessor::releaseResources() {}
 
-bool UweVizAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool UweVizAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
 #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
+    juce::ignoreUnused(layouts);
     return true;
 #else
+    // Visualizer: Akzeptiere Mono/Stereo-Input, Output-Layout darf abweichen
+    const auto mainIn  = layouts.getMainInputChannelSet();
     const auto mainOut = layouts.getMainOutputChannelSet();
+
+    if (mainIn != juce::AudioChannelSet::mono() && mainIn != juce::AudioChannelSet::stereo())
+        return false; // Nur Mono/Stereo Input zulassen
     if (mainOut != juce::AudioChannelSet::mono() && mainOut != juce::AudioChannelSet::stereo())
-        return false;
+        return false; // Output sollte ebenfalls Mono/Stereo sein
 
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainInputChannelSet() != mainOut)
-        return false;
-   #endif
-
+    // Für Visualizer-Plugins ist es OK, wenn Input != Output
     return true;
 #endif
 }

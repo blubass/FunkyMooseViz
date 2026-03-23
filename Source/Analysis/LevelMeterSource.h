@@ -3,6 +3,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <atomic>
+#include <vector>
 
 class LevelMeterSource {
 public:
@@ -38,6 +39,11 @@ private:
   float peakFalloff = 0.03f;
   float holdFalloff = 0.008f;
   float rmsSmoothing = 0.18f;
+
+  // Ring buffer for Momentary 400ms LUFS window
+  std::vector<float> momentaryBufferL;
+  std::vector<float> momentaryBufferR;
+  int momentaryWritePosition = 0;
 
   std::unique_ptr<juce::dsp::Oversampling<float>> truePeakOversampler;
 };

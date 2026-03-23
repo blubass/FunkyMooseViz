@@ -113,7 +113,7 @@ private:
     std::vector<float> tempMidBuffer;
     std::vector<float> tempSideBuffer;
 
-    std::atomic<bool> analyzeOnly { true };
+    std::atomic<bool> analyzeOnly { false };
     std::atomic<int> displayMode { 0 };
     std::atomic<bool> frozen { false };
     std::atomic<int> displayRangeDb { 90 };
