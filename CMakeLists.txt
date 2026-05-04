@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(FunkyMooseViz VERSION 0.5.0)
+project(FunkyMooseViz VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -70,6 +70,8 @@ set(FunkyMooseViz_SOURCES
     Source/Analysis/WaveformBuffer.h
     Source/Analysis/LevelMeterSource.cpp
     Source/Analysis/LevelMeterSource.h
+    Source/Analysis/StereoFFTAnalyzer.cpp
+    Source/Analysis/StereoFFTAnalyzer.h
 
     # Components
     Source/Components/SpectrumComponent.cpp
@@ -80,6 +82,10 @@ set(FunkyMooseViz_SOURCES
     Source/Components/MeterComponent.h
     Source/Components/ElchComponent.cpp
     Source/Components/ElchComponent.h
+    Source/Components/LoudnessHistoryComponent.cpp
+    Source/Components/LoudnessHistoryComponent.h
+    Source/Components/MultibandCorrelationComponent.cpp
+    Source/Components/MultibandCorrelationComponent.h
 )
 
 target_sources(FunkyMooseViz PRIVATE ${FunkyMooseViz_SOURCES})

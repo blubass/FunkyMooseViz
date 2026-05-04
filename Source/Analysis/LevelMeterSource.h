@@ -20,6 +20,9 @@ public:
   float getRmsRight() const { return rmsR; }
   float getLoudness() const { return loudness; }
   float getCorrelation() const { return correlation; }
+  
+  std::vector<float> getLoudnessHistory() const;
+  void updateHistory();
 
 private:
   std::atomic<float> peakL { 0.0f };
@@ -44,6 +47,11 @@ private:
   std::vector<float> momentaryBufferL;
   std::vector<float> momentaryBufferR;
   int momentaryWritePosition = 0;
+
+  // History for graph
+  static constexpr size_t historySize = 512;
+  std::vector<float> loudnessHistory;
+  size_t historyWritePos = 0;
 
   std::unique_ptr<juce::dsp::Oversampling<float>> truePeakOversampler;
 };

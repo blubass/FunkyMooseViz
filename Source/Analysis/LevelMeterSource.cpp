@@ -27,6 +27,9 @@ void LevelMeterSource::prepare(double sampleRate, int maxSamplesPerBlock) {
   momentaryBufferL.assign(static_cast<size_t>(momentarySamples), 0.0f);
   momentaryBufferR.assign(static_cast<size_t>(momentarySamples), 0.0f);
   momentaryWritePosition = 0;
+
+  loudnessHistory.assign(historySize, 0.0f);
+  historyWritePos = 0;
 }
 
 void LevelMeterSource::processBlock(juce::AudioBuffer<float> &buffer) {
@@ -190,4 +193,17 @@ void LevelMeterSource::decay() {
   peakR = juce::jmax(0.0f, peakR - peakFalloff);
   holdL = juce::jmax(0.0f, holdL - holdFalloff);
   holdR = juce::jmax(0.0f, holdR - holdFalloff);
+}
+
+void LevelMeterSource::updateHistory() {
+    loudnessHistory[historyWritePos] = loudness.load();
+    historyWritePos = (historyWritePos + 1) % historySize;
+}
+
+std::vector<float> LevelMeterSource::getLoudnessHistory() const {
+    std::vector<float> result(historySize);
+    for (size_t i = 0; i < historySize; ++i) {
+        result[i] = loudnessHistory[(historyWritePos + i) % historySize];
+    }
+    return result;
 }
